@@ -8,5 +8,12 @@
 
 import Foundation
 
-print("Hello, World!")
+let lexs = lexicalAnalysis("Int  Int  ")
+if let lexs = lexs {
+    for lex in lexs {
+        print(lex)
+    }
+} else {
+    print("lexical Error")
+}
 

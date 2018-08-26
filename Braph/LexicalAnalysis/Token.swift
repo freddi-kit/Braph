@@ -13,31 +13,19 @@ enum KeyWordType {
 }
 
 enum OperantType {
-    case Plus
+    case plus
+    case minus
 }
 
 enum LiteralType {
     case int
+    case string
 }
 
-enum Lex {
+enum Token {
     case keyword(KeyWordType, String)
     case operant(OperantType,String)
     case litral(String)
     case separator(String)
     case identifier(String)
-    case space
 }
-
-
-
-class Lexs {
-    static func indetifier(indetifier: String) -> Lex {
-        return .identifier(indetifier)
-    }
-    
-    static func space() -> Lex {
-        return .space
-    }
-}
-
