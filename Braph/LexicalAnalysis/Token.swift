@@ -8,24 +8,29 @@
 
 import Foundation
 
-enum KeyWordType {
-    case type
-}
-
-enum OperantType {
-    case plus
-    case minus
-}
-
-enum LiteralType {
-    case int
-    case string
-}
-
 enum Token {
+    
+    // MARK: Token Types
+    
+    enum KeyWordType {
+        case type
+    }
+    
+    enum OperantType {
+        case plus
+        case minus
+    }
+    
+    enum LiteralType {
+        case int
+        case string
+    }
+    
+    // MARK : Tokens
+    
     case keyword(KeyWordType, String)
-    case operant(OperantType,String)
-    case litral(String)
-    case separator(String)
+    case operant(OperantType, String)
+    case litral(LiteralType, String)
     case identifier(String)
+    case separator
 }
