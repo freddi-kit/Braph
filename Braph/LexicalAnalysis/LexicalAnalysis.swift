@@ -11,13 +11,6 @@ import Foundation
 protocol Q {
 }
 
-protocol QDetetingKeyWord {
-    associatedtype DetectingType
-    init(type: DetectingType, count: Int)
-    var type: DetectingType { get }
-    var count: Int { get }
-}
-
 class LexicalAnalysis {
     
     typealias TokenSequence = [Token]
@@ -80,9 +73,9 @@ class LexicalAnalysis {
     class QForSeparator: Q {
     }
     
-    class QForType: Q, QDetetingKeyWord {
+    class QForDetetingKeyWord: Q {
         
-        required init(type: DetectingType, count: Int) {
+        required init(type: [DetectingType], count: Int) {
             self.type = type
             self.count = count
         }
@@ -90,24 +83,12 @@ class LexicalAnalysis {
         enum DetectingType {
             case int
             case double
-        }
-        let type: DetectingType
-        let count: Int
-        
-    }
-    
-    class QForDefine: Q, QDetetingKeyWord {
-        
-        required init(type: DetectingType, count: Int) {
-            self.type = type
-            self.count = count
-        }
-        
-        enum DetectingType {
+            case string
+            case intaractive
             case `var`
             case `let`
         }
-        let type: DetectingType
+        let type: [DetectingType]
         let count: Int
         
     }
@@ -118,27 +99,29 @@ class LexicalAnalysis {
     // MARK: オートマトンチェッカー
     
     private let nextQandStatusFromFirstString:[String: Status] = [
-        " " : .accept(QForSeparator(),.separator),
-        "I" : .accept(QForType(type: .int, count: 1),.identifier("I")),
-        "D" : .accept(QForType(type: .double, count: 1),.identifier("D")),
-        "v" : .accept(QForDefine(type: .`var`, count: 1),.identifier("v")),
-        "l" : .accept(QForDefine(type: .`let`, count: 1),.identifier("l")),
+        " " : .accept(QForSeparator(), .separator),
+        "I" : .accept(QForDetetingKeyWord(type: [.int, .intaractive], count: 1), .identifier("I")),
+        "D" : .accept(QForDetetingKeyWord(type: [.double], count: 1), .identifier("D")),
+        "S" : .accept(QForDetetingKeyWord(type: [.string], count: 1), .identifier("S")),
+        "v" : .accept(QForDetetingKeyWord(type: [.`var`], count: 1), .identifier("v")),
+        "l" : .accept(QForDetetingKeyWord(type: [.`let`], count: 1), .identifier("l")),
     ]
+    
     private let bookedCharacter: [Character] = [
         " ", ":", ",", ".", "{", "}", "="
     ]
     
-    private let detectTypeFromQForType: [QForType.DetectingType: String] = [
+    private let detectingKeyWord: [QForDetetingKeyWord.DetectingType: String] = [
         .int : "Int",
-        .double: "Double"
-    ]
-    
-    private let detectTypeFromQForDefine: [QForDefine.DetectingType: String] = [
-        .`var`: "var",
-        .`let`: "let"
+        .intaractive: "Intaractive",
+        .double : "Double",
+        .string : "String",
+        .`var` : "var",
+        .`let` : "let"
     ]
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
+        let inputToString = String(input)
         switch q {
         // 初期状態
         case _ as QForStarter:
@@ -146,42 +129,27 @@ class LexicalAnalysis {
                 return result
             }
             return .accept(QForIndetifier(),.identifier(String(input)))
-        // 型キーワードを検出するかもしれない状態
-        case let q as QForType:
+        // キーワードを検出するかもしれない状態
+        case let q as QForDetetingKeyWord:
             let type = q.type
             let nowCount = q.count
             
-            guard let checkingTypeString = detectTypeFromQForType[type] else {
+            guard let nowType = type.first, let checkingTypeString = detectingKeyWord[nowType], input.last != " " else {
                 return .undefined
             }
 
-            let checkingTypeCharacters = Array(checkingTypeString)
+            let checkingTypeCharacters = checkingTypeString.map { $0 } 
             
             if input.last == checkingTypeCharacters[nowCount] {
                 if input.count == checkingTypeCharacters.count {
-                    return .accept(QForIndetifier(),.keyword(.type, String(input)))
+                    if q.type.count == 1 {
+                        return .accept(QForIndetifier(), .keyword(.type, inputToString))
+                    }
+                    return .accept(QForDetetingKeyWord(type: q.type.suffix(from: 1).map{ $0 }, count: input.count),.keyword(.type, inputToString))
                 }
-                return .accept(QForType(type: type, count: nowCount+1),.identifier(String(input)))
+                return .accept(QForDetetingKeyWord(type: type, count: nowCount+1),.identifier(inputToString))
             }
-            return .undefined
-        // 宣言キーワードを検出するかもしれない状態
-        case let q as QForDefine:
-            let type = q.type
-            let nowCount = q.count
-            
-            guard let checkingTypeString = detectTypeFromQForDefine[type] else {
-                return .undefined
-            }
-            
-            let checkingTypeCharacters = Array(checkingTypeString)
-            
-            if input.last == checkingTypeCharacters[nowCount] {
-                if input.count == checkingTypeCharacters.count {
-                    return .accept(QForIndetifier(),.keyword(.define, String(input)))
-                }
-                return .accept(QForDefine(type: type, count: nowCount+1),.identifier(String(input)))
-            }
-            return .undefined
+            return .accept(QForIndetifier(),.identifier(inputToString))
         // セパレータの状態
         case _ as QForSeparator:
             if input.last == " " {
