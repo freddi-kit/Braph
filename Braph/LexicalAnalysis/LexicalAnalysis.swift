@@ -56,12 +56,14 @@ class LexicalAnalysis {
     // MARK: オートマトンチェッカー
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
+        print(input)
         let inputToString = String(input)
         switch q {
         // 状態: 初期
         case _ as QForStarter:
             // 初期状態から次の検知状態の探索
-            if let result = LexicalAnalysisResources.nextQandStatusFromFirstString[String(input)] {
+            if let inputFirstCharacter = input.first,
+                let result = LexicalAnalysisResources.nextStatusFromFirstString[inputFirstCharacter] {
                 return result
             }
             

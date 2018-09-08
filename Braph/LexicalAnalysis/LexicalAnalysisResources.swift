@@ -8,8 +8,10 @@
 
 import Foundation
 
+// TODO: 自動生成スクリプトの作成
+
 class LexicalAnalysisResources {
-    static let nextQandStatusFromFirstString:[String: Status] = [
+    static let nextStatusFromFirstString:[Character: Status] = [
         "I" : .accept(QKeyWord(type: [.int, .intaractive], count: 1), .identifier("I")),
         "D" : .accept(QKeyWord(type: [.double], count: 1), .identifier("D")),
         "S" : .accept(QKeyWord(type: [.string], count: 1), .identifier("S")),
