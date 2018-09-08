@@ -73,7 +73,7 @@ class LexicalAnalysis {
     class QForSeparator: Q {
     }
     
-    class QForDetetingKeyWord: Q {
+    class QKeyWord: Q {
         
         required init(type: [DetectingType], count: Int) {
             self.type = type
@@ -96,28 +96,32 @@ class LexicalAnalysis {
     class QForIndetifier: Q {
     }
     
+    class QForSymbol: Q {
+    }
+    
     // MARK: オートマトンチェッカー
     
+    // TODO: 実装的によろしくないので、以下の変数たちはいつか改装する
     private let nextQandStatusFromFirstString:[String: Status] = [
         " " : .accept(QForSeparator(), .separator),
-        "I" : .accept(QForDetetingKeyWord(type: [.int, .intaractive], count: 1), .identifier("I")),
-        "D" : .accept(QForDetetingKeyWord(type: [.double], count: 1), .identifier("D")),
-        "S" : .accept(QForDetetingKeyWord(type: [.string], count: 1), .identifier("S")),
-        "v" : .accept(QForDetetingKeyWord(type: [.`var`], count: 1), .identifier("v")),
-        "l" : .accept(QForDetetingKeyWord(type: [.`let`], count: 1), .identifier("l")),
+        "I" : .accept(QKeyWord(type: [.int, .intaractive], count: 1), .identifier("I")),
+        "D" : .accept(QKeyWord(type: [.double], count: 1), .identifier("D")),
+        "S" : .accept(QKeyWord(type: [.string], count: 1), .identifier("S")),
+        "v" : .accept(QKeyWord(type: [.`var`], count: 1), .identifier("v")),
+        "l" : .accept(QKeyWord(type: [.`let`], count: 1), .identifier("l")),
     ]
     
-    private let bookedCharacter: [Character] = [
+    private let symbolCharacters: [Character] = [
         " ", ":", ",", ".", "{", "}", "="
     ]
     
-    private let detectingKeyWord: [QForDetetingKeyWord.DetectingType: String] = [
-        .int : "Int",
-        .intaractive: "Intaractive",
-        .double : "Double",
-        .string : "String",
-        .`var` : "var",
-        .`let` : "let"
+    private let detectingKeyWord: [QKeyWord.DetectingType: (string: String, token: Token.KeyWordType)] = [
+        .int : ("Int", .type),
+        .intaractive: ("Intaractive", .type),
+        .double : ("Double", .type),
+        .string : ("String", .type),
+        .`var` : ("var", .define),
+        .`let` : ("let", .define)
     ]
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
@@ -125,43 +129,86 @@ class LexicalAnalysis {
         switch q {
         // 初期状態
         case _ as QForStarter:
+            // 初期状態から次のキーワード検知状態の探索
             if let result = nextQandStatusFromFirstString[String(input)] {
                 return result
             }
-            return .accept(QForIndetifier(),.identifier(String(input)))
-        // キーワードを検出するかもしれない状態
-        case let q as QForDetetingKeyWord:
-            let type = q.type
-            let nowCount = q.count
             
-            guard let nowType = type.first, let checkingTypeString = detectingKeyWord[nowType], input.last != " " else {
+            // 記号検知状態の探索
+            if let inputLastCharacter = input.last, input.count == 1,
+                symbolCharacters.contains(inputLastCharacter) {
+                    return .accept(QForSymbol(), .separator)
+            }
+            
+            // それ以外の場合、識別子検知状態に投げる
+            return .accept(
+                QForIndetifier(),
+                .identifier(String(input))
+            )
+        // キーワードを検出するかもしれない状態
+        case let q as QKeyWord:
+            let type = q.type       // いま撮ろうとしているキーワードの種類（優先度順の配列）
+            let nowCount = q.count  // 現在の文字列の長さ
+            
+            guard let nowType = type.first,                             // 撮ろうとしているキーワードがある
+                let nowDetectingKeyWord = detectingKeyWord[nowType],    // キーワードがdetectingKeyWordに登録済み
+                let inputLastCharacter = input.last,                    // 最後の文字は記号ではない
+                !symbolCharacters.contains(inputLastCharacter) else {
                 return .undefined
             }
-
-            let checkingTypeCharacters = checkingTypeString.map { $0 } 
+            
+            // 今チェックしているキーワードのString
+            let checkingTypeCharacters = Array(nowDetectingKeyWord.string)
             
             if input.last == checkingTypeCharacters[nowCount] {
                 if input.count == checkingTypeCharacters.count {
                     if q.type.count == 1 {
-                        return .accept(QForIndetifier(), .keyword(.type, inputToString))
+                        return .accept(
+                            QForIndetifier(),
+                            .keyword(nowDetectingKeyWord.token, inputToString)
+                        )
                     }
-                    return .accept(QForDetetingKeyWord(type: q.type.suffix(from: 1).map{ $0 }, count: input.count),.keyword(.type, inputToString))
+                    return .accept(
+                        QKeyWord(
+                            type: q.type.suffix(from: 1).map{ $0 },
+                            count: input.count
+                        ),
+                        .keyword(nowDetectingKeyWord.token, inputToString)
+                    )
                 }
-                return .accept(QForDetetingKeyWord(type: type, count: nowCount+1),.identifier(inputToString))
+                return .accept(
+                    QKeyWord(
+                        type: type,
+                        count: nowCount+1),
+                    .identifier(inputToString)
+                )
             }
-            return .accept(QForIndetifier(),.identifier(inputToString))
-        // セパレータの状態
+            
+            // もし、キーワードに合致しない場合は識別子として取る
+            return .accept(
+                QForIndetifier(),
+                .identifier(inputToString)
+            )
+        // 状態:空白
         case _ as QForSeparator:
+            // 連続する空白は一つのセパレータとしてとること
             if input.last == " " {
                 return .accept(QForSeparator(),.separator)
             }
             return .undefined
-        // 識別子の状態
+        // 状態:識別子
         case _ as QForIndetifier:
-            if let inputLastCharacter = input.last, bookedCharacter.contains(inputLastCharacter) {
+            // もし末尾に記号がある場合、undefinedにする
+            if let inputLastCharacter = input.last,
+                symbolCharacters.contains(inputLastCharacter) {
                 return .undefined
             }
-            return .accept(QForIndetifier(),.identifier(String(input)))
+            
+            // それ以外の場合は識別子として取る
+            return .accept(
+                QForIndetifier(),
+                .identifier(inputToString)
+            )
         default:
             return .undefined
         }
