@@ -127,7 +127,7 @@ class LexicalAnalysis {
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
         let inputToString = String(input)
         switch q {
-        // 初期状態
+        // 状態: 初期
         case _ as QForStarter:
             // 初期状態から次のキーワード検知状態の探索
             if let result = nextQandStatusFromFirstString[String(input)] {
@@ -137,7 +137,7 @@ class LexicalAnalysis {
             // 記号検知状態の探索
             if let inputLastCharacter = input.last, input.count == 1,
                 symbolCharacters.contains(inputLastCharacter) {
-                    return .accept(QForSymbol(), .separator)
+                    return .accept(QForSymbol(), .symbol(inputToString))
             }
             
             // それ以外の場合、識別子検知状態に投げる
@@ -160,14 +160,18 @@ class LexicalAnalysis {
             // 今チェックしているキーワードのString
             let checkingTypeCharacters = Array(nowDetectingKeyWord.string)
             
+            // 文字列が今の所一致しているかどうか
             if input.last == checkingTypeCharacters[nowCount] {
+                // すべて一致したとき
                 if input.count == checkingTypeCharacters.count {
+                    // 現在の文字列で検知すべきキーワードがもう無い
                     if q.type.count == 1 {
                         return .accept(
                             QForIndetifier(),
                             .keyword(nowDetectingKeyWord.token, inputToString)
                         )
                     }
+                    // まだある
                     return .accept(
                         QKeyWord(
                             type: q.type.suffix(from: 1).map{ $0 },
@@ -189,14 +193,14 @@ class LexicalAnalysis {
                 QForIndetifier(),
                 .identifier(inputToString)
             )
-        // 状態:空白
+        // 状態: 空白
         case _ as QForSeparator:
             // 連続する空白は一つのセパレータとしてとること
             if input.last == " " {
                 return .accept(QForSeparator(),.separator)
             }
             return .undefined
-        // 状態:識別子
+        // 状態: 識別子
         case _ as QForIndetifier:
             // もし末尾に記号がある場合、undefinedにする
             if let inputLastCharacter = input.last,
@@ -209,6 +213,8 @@ class LexicalAnalysis {
                 QForIndetifier(),
                 .identifier(inputToString)
             )
+        
+        // 状態: 未定義
         default:
             return .undefined
         }

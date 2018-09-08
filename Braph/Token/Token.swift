@@ -33,5 +33,6 @@ enum Token {
     case operant(OperantType, String)
     case litral(LiteralType, String)
     case identifier(String)
+    case symbol(String)
     case separator
 }
