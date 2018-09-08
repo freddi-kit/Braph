@@ -14,6 +14,7 @@ enum Token {
     
     enum KeyWordType {
         case type
+        case define
     }
     
     enum OperantType {
