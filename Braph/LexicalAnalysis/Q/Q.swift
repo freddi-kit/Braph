@@ -8,19 +8,9 @@
 
 import Foundation
 
+/// オートマトンの状態プロトコル
 protocol Q {
 }
-
-// MARK: Status
-
-enum Status {
-    case start(Q)
-    case normal(Q)
-    case accept(Q, Token)
-    case undefined
-}
-
-// MARK: Q
 
 class QForStarter: Q {
 }

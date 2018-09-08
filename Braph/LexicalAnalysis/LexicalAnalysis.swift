@@ -10,11 +10,21 @@ import Foundation
 
 class LexicalAnalysis {
     
+    // MARK: Nested Types
+    
+    // なんでこんなことやったかよくわからんけど、放置
     typealias TokenSequence = [Token]
-   
+    
+    enum Status {
+        case start(Q)
+        case normal(Q)
+        case accept(Q, Token)
+        case undefined
+    }
+    
     // MARK : Public Functions
     
-    /// Lexical Analysis
+    /// 字句解析
     public func analysis(input stringForAnalysis: String) -> TokenSequence? {
         var resultTokenSequence: TokenSequence = []
         var startIndex = 0, nowIndex = 0
@@ -53,7 +63,7 @@ class LexicalAnalysis {
         return resultTokenSequence
     }
 
-    // MARK: オートマトンチェッカー
+    // MARK: 字句解析のオートマトンのチェック
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
         print(input)
@@ -63,7 +73,7 @@ class LexicalAnalysis {
         case _ as QForStarter:
             // 初期状態から次の検知状態の探索
             if let inputFirstCharacter = input.first,
-                let result = LexicalAnalysisResources.nextStatusFromFirstString[inputFirstCharacter] {
+                let result = LexicalAnalysisResources.nextStatusFromFirstChara[inputFirstCharacter] {
                 return result
             }
             
@@ -79,8 +89,8 @@ class LexicalAnalysis {
             
             guard let nowType = type.first,                             // 撮ろうとしているキーワードがある
                 let nowDetectingKeyWord = LexicalAnalysisResources.detectingKeyWord[nowType],    // キーワードがdetectingKeyWordに登録済み
-                let inputLastCharacter = input.last,                    // 最後の文字は記号ではない
-                !LexicalAnalysisResources.symbolCharacters.contains(inputLastCharacter) else {
+                let inputLastCharacter = input.last,                    // 最後の文字は識別子に含められる文字である
+                !LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) else {
                 return .undefined
             }
             
@@ -131,7 +141,7 @@ class LexicalAnalysis {
         case _ as QForIndetifier:
             // もし末尾に記号がある場合、undefinedにする
             if let inputLastCharacter = input.last,
-                LexicalAnalysisResources.symbolCharacters.contains(inputLastCharacter) {
+                LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) {
                 return .undefined
             }
             
