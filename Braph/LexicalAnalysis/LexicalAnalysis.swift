@@ -8,9 +8,6 @@
 
 import Foundation
 
-protocol Q {
-}
-
 class LexicalAnalysis {
     
     typealias TokenSequence = [Token]
@@ -55,89 +52,17 @@ class LexicalAnalysis {
         
         return resultTokenSequence
     }
-    
-    // MARK: Status
-    
-    enum Status {
-        case start(Q)
-        case normal(Q)
-        case accept(Q, Token)
-        case undefined
-    }
-    
-    // MARK: Q
-    
-    class QForStarter: Q {
-    }
-    
-    class QForSeparator: Q {
-    }
-    
-    class QKeyWord: Q {
-        
-        required init(type: [DetectingType], count: Int) {
-            self.type = type
-            self.count = count
-        }
-        
-        enum DetectingType {
-            case int
-            case double
-            case string
-            case intaractive
-            case `var`
-            case `let`
-        }
-        let type: [DetectingType]
-        let count: Int
-        
-    }
-    
-    class QForIndetifier: Q {
-    }
-    
-    class QForSymbol: Q {
-    }
-    
+
     // MARK: オートマトンチェッカー
-    
-    // TODO: 実装的によろしくないので、以下の変数たちはいつか改装する
-    private let nextQandStatusFromFirstString:[String: Status] = [
-        " " : .accept(QForSeparator(), .separator),
-        "I" : .accept(QKeyWord(type: [.int, .intaractive], count: 1), .identifier("I")),
-        "D" : .accept(QKeyWord(type: [.double], count: 1), .identifier("D")),
-        "S" : .accept(QKeyWord(type: [.string], count: 1), .identifier("S")),
-        "v" : .accept(QKeyWord(type: [.`var`], count: 1), .identifier("v")),
-        "l" : .accept(QKeyWord(type: [.`let`], count: 1), .identifier("l")),
-    ]
-    
-    private let symbolCharacters: [Character] = [
-        " ", ":", ",", ".", "{", "}", "="
-    ]
-    
-    private let detectingKeyWord: [QKeyWord.DetectingType: (string: String, token: Token.KeyWordType)] = [
-        .int : ("Int", .type),
-        .intaractive: ("Intaractive", .type),
-        .double : ("Double", .type),
-        .string : ("String", .type),
-        .`var` : ("var", .define),
-        .`let` : ("let", .define)
-    ]
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
         let inputToString = String(input)
         switch q {
         // 状態: 初期
         case _ as QForStarter:
-            // 初期状態から次のキーワード検知状態の探索
-            if let result = nextQandStatusFromFirstString[String(input)] {
+            // 初期状態から次の検知状態の探索
+            if let result = LexicalAnalysisResources.nextQandStatusFromFirstString[String(input)] {
                 return result
-            }
-            
-            // 記号検知状態の探索
-            if let inputLastCharacter = input.last, input.count == 1,
-                symbolCharacters.contains(inputLastCharacter) {
-                    return .accept(QForSymbol(), .symbol(inputToString))
             }
             
             // それ以外の場合、識別子検知状態に投げる
@@ -151,9 +76,9 @@ class LexicalAnalysis {
             let nowCount = q.count  // 現在の文字列の長さ
             
             guard let nowType = type.first,                             // 撮ろうとしているキーワードがある
-                let nowDetectingKeyWord = detectingKeyWord[nowType],    // キーワードがdetectingKeyWordに登録済み
+                let nowDetectingKeyWord = LexicalAnalysisResources.detectingKeyWord[nowType],    // キーワードがdetectingKeyWordに登録済み
                 let inputLastCharacter = input.last,                    // 最後の文字は記号ではない
-                !symbolCharacters.contains(inputLastCharacter) else {
+                !LexicalAnalysisResources.symbolCharacters.contains(inputLastCharacter) else {
                 return .undefined
             }
             
@@ -204,7 +129,7 @@ class LexicalAnalysis {
         case _ as QForIndetifier:
             // もし末尾に記号がある場合、undefinedにする
             if let inputLastCharacter = input.last,
-                symbolCharacters.contains(inputLastCharacter) {
+                LexicalAnalysisResources.symbolCharacters.contains(inputLastCharacter) {
                 return .undefined
             }
             
