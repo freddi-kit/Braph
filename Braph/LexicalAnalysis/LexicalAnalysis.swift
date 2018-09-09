@@ -17,7 +17,7 @@ class LexicalAnalysis {
     
     enum Status {
         case start(Q)
-        case normal(Q)
+        case normal(Q, Token)
         case accept(Q, Token)
         case undefined
     }
@@ -48,11 +48,13 @@ class LexicalAnalysis {
             case let .accept(qFromAutomater, token):
                 if nowIndex + 1 == stringForAnalysis.count {
                     resultTokenSequence.append(token)
-                    return resultTokenSequence
                 }
                 lastAcceptedIndexAndToken = (nowIndex + 1, token)
                 nowQ = qFromAutomater
-            case let .normal(qFromAutomater):
+            case let .normal(qFromAutomater, _):
+                if nowIndex + 1 == stringForAnalysis.count {
+                    return nil
+                }
                 nowQ = qFromAutomater
             default:
                 break;
@@ -60,20 +62,30 @@ class LexicalAnalysis {
             nowIndex += 1
         }
         
+        resultTokenSequence.append(.end)
+        
         return resultTokenSequence
     }
 
     // MARK: 字句解析のオートマトンのチェック
     
     private func automataChecker(_ q: Q, _ input: [Character]) -> Status {
-        print(input)
+        // 一番先頭の文字
+        guard let inputFirstCharacter = input.first,
+            let inputLastCharacter = input.last else {
+            return .accept(QForSeparator(),.separator)
+        }
+        
         let inputToString = String(input)
         switch q {
         // 状態: 初期
         case _ as QForStarter:
             // 初期状態から次の検知状態の探索
-            if let inputFirstCharacter = input.first,
-                let result = LexicalAnalysisResources.nextStatusFromFirstChara[inputFirstCharacter] {
+            if let result = LexicalAnalysisResources.nextStatusFromFirstChara[inputFirstCharacter] {
+                return result
+            }
+            
+            if let result = LexicalAnalysisResources.literalChecker(input: inputFirstCharacter) {
                 return result
             }
             
@@ -89,8 +101,8 @@ class LexicalAnalysis {
             
             guard let nowType = type.first,                             // 撮ろうとしているキーワードがある
                 let nowDetectingKeyWord = LexicalAnalysisResources.detectingKeyWord[nowType],    // キーワードがdetectingKeyWordに登録済み
-                let inputLastCharacter = input.last,                    // 最後の文字は識別子に含められる文字である
-                !LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) else {
+                !LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) // 最後の文字は識別子に含められる文字である
+                else {
                 return .undefined
             }
             
@@ -111,7 +123,7 @@ class LexicalAnalysis {
                     // まだある
                     return .accept(
                         QKeyWord(
-                            type: q.type.suffix(from: 1).map{ $0 },
+                            typeStack: q.type.suffix(from: 1).map{ $0 },
                             count: input.count
                         ),
                         .keyword(nowDetectingKeyWord.token, inputToString)
@@ -119,7 +131,7 @@ class LexicalAnalysis {
                 }
                 return .accept(
                     QKeyWord(
-                        type: type,
+                        typeStack: type,
                         count: nowCount+1),
                     .identifier(inputToString)
                 )
@@ -140,8 +152,7 @@ class LexicalAnalysis {
         // 状態: 識別子
         case _ as QForIndetifier:
             // もし末尾に記号がある場合、undefinedにする
-            if let inputLastCharacter = input.last,
-                LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) {
+            if LexicalAnalysisResources.notAcceptableCharsAsIndet.contains(inputLastCharacter) {
                 return .undefined
             }
             
@@ -150,7 +161,23 @@ class LexicalAnalysis {
                 QForIndetifier(),
                 .identifier(inputToString)
             )
-        
+        // 状態: 数値リテラル
+        case let q as QForNumericLiteral:
+            if inputLastCharacter == "." && !(q.type == .double) {
+                return .accept(QForNumericLiteral(type: .double), .literal(.double, inputToString))
+            }
+            if LexicalAnalysisResources.numericLiterals.contains(inputLastCharacter) {
+                let typeForAccept: Token.LiteralType = (q.type == .double) ? .double : .int
+                return .accept(QForNumericLiteral(type: typeForAccept), .literal(typeForAccept, inputToString))
+            }
+            return .undefined
+        // 状態: 文字列リテラル
+        case _ as QForStringLiteral:
+            if LexicalAnalysisResources.stringLiterals.contains(inputLastCharacter),
+                inputFirstCharacter == inputLastCharacter {
+                return .accept(QForDeadStatus(), .literal(.string, inputToString))
+            }
+            return .normal(QForStringLiteral(), .literal(.string, inputToString))
         // 状態: 未定義
         default:
             return .undefined

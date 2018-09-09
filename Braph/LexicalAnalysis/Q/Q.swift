@@ -20,8 +20,8 @@ class QForSeparator: Q {
 
 class QKeyWord: Q {
     
-    required init(type: [DetectingType], count: Int) {
-        self.type = type
+    required init(typeStack: [DetectingType], count: Int) {
+        self.type = typeStack
         self.count = count
     }
     
@@ -32,14 +32,31 @@ class QKeyWord: Q {
         case intaractive
         case `var`
         case `let`
+        case `func`
+        case `return`
     }
+    
     let type: [DetectingType]
     let count: Int
-    
 }
 
 class QForIndetifier: Q {
 }
 
 class QForSymbol: Q {
+}
+
+class QForNumericLiteral: Q {
+    
+    required init(type: Token.LiteralType) {
+        self.type = type
+    }
+    
+    let type: Token.LiteralType
+}
+
+class QForStringLiteral: Q {
+}
+
+class QForDeadStatus: Q {
 }

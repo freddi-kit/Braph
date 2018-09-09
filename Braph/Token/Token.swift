@@ -15,6 +15,7 @@ enum Token {
     enum KeyWordType {
         case type
         case define
+        case `return`
     }
     
     enum OperantType {
@@ -24,6 +25,7 @@ enum Token {
     
     enum LiteralType {
         case int
+        case double
         case string
     }
     
@@ -31,8 +33,9 @@ enum Token {
     
     case keyword(KeyWordType, String)
     case operant(OperantType, String)
-    case litral(LiteralType, String)
+    case literal(LiteralType, String)
     case identifier(String)
     case symbol(String)
     case separator
+    case end
 }
