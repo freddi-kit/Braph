@@ -25,12 +25,14 @@ class LexicalAnalysisResources {
         "," : .accept(QForSymbol(), .symbol(",")),
         "{" : .accept(QForSymbol(), .symbol("{")),
         "}" : .accept(QForSymbol(), .symbol("}")),
+        "(" : .accept(QForSymbol(), .symbol("(")),
+        ")" : .accept(QForSymbol(), .symbol(")")),
         "+" : .accept(QForSymbol(), .operant(.plus, "+")),
         "-" : .accept(QForSymbol(), .operant(.minus, "-"))
     ]
     
     static let notAcceptableCharsAsIndet: [Character] = [
-        " ", ":", ",", ".", "{", "}", "=", "+", "-"
+        " ", ":", ",", ".", "{", "}", "(", ")", "=", "+", "-"
     ]
     
     static let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: Token.KeyWordType)] = [

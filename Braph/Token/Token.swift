@@ -38,4 +38,13 @@ enum Token {
     case symbol(String)
     case separator
     case end
+    
+    func isSeparator() -> Bool {
+        switch self {
+        case .separator:
+            return true
+        default:
+            return false
+        }
+    }
 }

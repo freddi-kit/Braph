@@ -46,7 +46,7 @@ class LexicalAnalysis {
                 lastAcceptedIndexAndToken = nil
                 nowQ = QForStarter()
             case let .accept(qFromAutomater, token):
-                if nowIndex + 1 == stringForAnalysis.count {
+                if nowIndex + 1 == stringForAnalysis.count && !token.isSeparator() {
                     resultTokenSequence.append(token)
                 }
                 lastAcceptedIndexAndToken = (nowIndex + 1, token)
