@@ -8,7 +8,13 @@
 
 import Foundation
 
-enum Token {
+// なんでこんなことやったかよくわからんけど、放置
+typealias TokenSequence = [TokenNode]
+
+protocol Token {
+}
+
+enum TokenNode: Token {
     
     // MARK: Token Types
     
@@ -36,6 +42,7 @@ enum Token {
     case literal(LiteralType, String)
     case identifier(String)
     case symbol(String)
+    case parenthesis(String)
     case separator
     case end
     
@@ -47,4 +54,8 @@ enum Token {
             return false
         }
     }
+}
+
+class TokenTree: Token {
+    
 }

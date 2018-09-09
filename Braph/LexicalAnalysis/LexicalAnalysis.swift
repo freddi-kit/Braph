@@ -12,13 +12,10 @@ class LexicalAnalysis {
     
     // MARK: Nested Types
     
-    // なんでこんなことやったかよくわからんけど、放置
-    typealias TokenSequence = [Token]
-    
     enum Status {
         case start(Q)
-        case normal(Q, Token)
-        case accept(Q, Token)
+        case normal(Q, TokenNode)
+        case accept(Q, TokenNode)
         case undefined
     }
     
@@ -29,7 +26,7 @@ class LexicalAnalysis {
         var resultTokenSequence: TokenSequence = []
         var startIndex = 0, nowIndex = 0
         var nowQ: Q = QForStarter()
-        var lastAcceptedIndexAndToken:(Int, Token)? = nil
+        var lastAcceptedIndexAndToken:(index: Int, token: TokenNode)? = nil
         
         while nowIndex < stringForAnalysis.count {
             let subStringForAnalysis:[Character] = Array(stringForAnalysis)[startIndex...nowIndex].map { $0 }
@@ -40,16 +37,18 @@ class LexicalAnalysis {
                 guard let nowLastAcceptIndexAndLex = lastAcceptedIndexAndToken else {
                     return nil
                 }
-                startIndex = nowLastAcceptIndexAndLex.0
-                nowIndex = nowLastAcceptIndexAndLex.0 - 1
-                resultTokenSequence.append(nowLastAcceptIndexAndLex.1)
+                startIndex = nowLastAcceptIndexAndLex.index
+                nowIndex = nowLastAcceptIndexAndLex.index - 1
+                if !nowLastAcceptIndexAndLex.token.isSeparator() {
+                    resultTokenSequence.append(nowLastAcceptIndexAndLex.1)
+                }
                 lastAcceptedIndexAndToken = nil
                 nowQ = QForStarter()
             case let .accept(qFromAutomater, token):
-                if nowIndex + 1 == stringForAnalysis.count && !token.isSeparator() {
+                if (nowIndex + 1 == stringForAnalysis.count) && !token.isSeparator() {
                     resultTokenSequence.append(token)
                 }
-                lastAcceptedIndexAndToken = (nowIndex + 1, token)
+                lastAcceptedIndexAndToken = (index: nowIndex + 1, token: token)
                 nowQ = qFromAutomater
             case let .normal(qFromAutomater, _):
                 if nowIndex + 1 == stringForAnalysis.count {
@@ -61,8 +60,6 @@ class LexicalAnalysis {
             }
             nowIndex += 1
         }
-        
-        resultTokenSequence.append(.end)
         
         return resultTokenSequence
     }
@@ -167,7 +164,7 @@ class LexicalAnalysis {
                 return .accept(QForNumericLiteral(type: .Double), .literal(.Double, inputToString))
             }
             if LexicalAnalysisResources.numericLiterals.contains(inputLastCharacter) {
-                let typeForAccept: Token.LiteralType = (q.type == .Double) ? .Double : .Int
+                let typeForAccept: TokenNode.LiteralType = (q.type == .Double) ? .Double : .Int
                 return .accept(QForNumericLiteral(type: typeForAccept), .literal(typeForAccept, inputToString))
             }
             return .undefined

@@ -11,23 +11,25 @@ import Foundation
 
 func main(){
     let lexicalAnalysis = LexicalAnalysis()
+    let syntaxAnalysis = SyntaxAnalysis()
     
     while true {
         // Input from command line
         print(": >>", terminator: " ")
-        guard let inputFromInterprit = readLine() else {
-            break
-        }
         
         // Lexical Analysis
-        let lexs = lexicalAnalysis.analysis(input: inputFromInterprit)
-        
-        if let lexs = lexs {
-            for lex in lexs {
-                print(lex)
+        if let inputFromInterprit = readLine(),
+            let lexs = lexicalAnalysis.analysis(input: inputFromInterprit) {
+            print(lexs)
+            
+            if let syntaxTree = syntaxAnalysis.analysis(input: lexs) {
+                print(syntaxTree)
+            } else {
+                print("syntax Error")
             }
         } else {
             print("lexical Error")
+            
         }
     }
 }

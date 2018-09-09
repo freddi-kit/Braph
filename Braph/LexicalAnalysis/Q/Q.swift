@@ -48,11 +48,11 @@ class QForSymbol: Q {
 
 class QForNumericLiteral: Q {
     
-    required init(type: Token.LiteralType) {
+    required init(type: TokenNode.LiteralType) {
         self.type = type
     }
     
-    let type: Token.LiteralType
+    let type: TokenNode.LiteralType
 }
 
 class QForStringLiteral: Q {

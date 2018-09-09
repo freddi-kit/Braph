@@ -11,7 +11,7 @@ import Foundation
 // TODO: 自動生成スクリプトの作成
 
 class LexicalAnalysisResources {
-    static let nextStatusFromFirstChara:[Character: LexicalAnalysis.Status] = [
+    static public let nextStatusFromFirstChara:[Character: LexicalAnalysis.Status] = [
         "I" : .accept(QKeyWord(typeStack: [.Int, .Intaractive], count: 1), .identifier("I")),
         "D" : .accept(QKeyWord(typeStack: [.Double], count: 1), .identifier("D")),
         "S" : .accept(QKeyWord(typeStack: [.String], count: 1), .identifier("S")),
@@ -23,19 +23,18 @@ class LexicalAnalysisResources {
         "=" : .accept(QForSymbol(), .symbol("=")),
         ":" : .accept(QForSymbol(), .symbol(":")),
         "," : .accept(QForSymbol(), .symbol(",")),
-        "{" : .accept(QForSymbol(), .symbol("{")),
-        "}" : .accept(QForSymbol(), .symbol("}")),
-        "(" : .accept(QForSymbol(), .symbol("(")),
-        ")" : .accept(QForSymbol(), .symbol(")")),
+        ";" : .accept(QForSymbol(), .end),
+        "{" : .accept(QForSymbol(), .parenthesis("{")),
+        "}" : .accept(QForSymbol(), .parenthesis("}")),
+        "(" : .accept(QForSymbol(), .parenthesis("(")),
+        ")" : .accept(QForSymbol(), .parenthesis(")")),
         "+" : .accept(QForSymbol(), .operant(.plus, "+")),
         "-" : .accept(QForSymbol(), .operant(.minus, "-"))
     ]
     
-    static let notAcceptableCharsAsIndet: [Character] = [
-        " ", ":", ",", ".", "{", "}", "(", ")", "=", "+", "-"
-    ]
+    static public let notAcceptableCharsAsIndet: [Character] = Array(" :;,.{}()=+-")
     
-    static let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: Token.KeyWordType)] = [
+    static public let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: TokenNode.KeyWordType)] = [
         .Int : ("Int", .type),
         .Intaractive: ("Intaractive", .type),
         .Double : ("Double", .type),
@@ -46,13 +45,13 @@ class LexicalAnalysisResources {
         .return : ("return", .return)
     ]
     
-    static let numericLiterals: [Character] = Array("0123456789")
+    static public let numericLiterals: [Character] = Array("0123456789")
     
-    static let stringLiterals: [Character] = [
+    static public let stringLiterals: [Character] = [
         "\"", "\'"
     ]
     
-    static func literalChecker(input: Character) -> LexicalAnalysis.Status? {
+    static public func literalChecker(input: Character) -> LexicalAnalysis.Status? {
         if numericLiterals.contains(input) {
             return .accept(QForNumericLiteral(type: .Int), .literal(.Int, String(input)))
         } else if stringLiterals.contains(input) {
