@@ -163,11 +163,11 @@ class LexicalAnalysis {
             )
         // 状態: 数値リテラル
         case let q as QForNumericLiteral:
-            if inputLastCharacter == "." && !(q.type == .double) {
-                return .accept(QForNumericLiteral(type: .double), .literal(.double, inputToString))
+            if inputLastCharacter == "." && !(q.type == .Double) {
+                return .accept(QForNumericLiteral(type: .Double), .literal(.Double, inputToString))
             }
             if LexicalAnalysisResources.numericLiterals.contains(inputLastCharacter) {
-                let typeForAccept: Token.LiteralType = (q.type == .double) ? .double : .int
+                let typeForAccept: Token.LiteralType = (q.type == .Double) ? .Double : .Int
                 return .accept(QForNumericLiteral(type: typeForAccept), .literal(typeForAccept, inputToString))
             }
             return .undefined
@@ -175,9 +175,9 @@ class LexicalAnalysis {
         case _ as QForStringLiteral:
             if LexicalAnalysisResources.stringLiterals.contains(inputLastCharacter),
                 inputFirstCharacter == inputLastCharacter {
-                return .accept(QForDeadStatus(), .literal(.string, inputToString))
+                return .accept(QForDeadStatus(), .literal(.String, inputToString))
             }
-            return .normal(QForStringLiteral(), .literal(.string, inputToString))
+            return .normal(QForStringLiteral(), .literal(.String, inputToString))
         // 状態: 未定義
         default:
             return .undefined

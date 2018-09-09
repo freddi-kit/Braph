@@ -24,9 +24,9 @@ enum Token {
     }
     
     enum LiteralType {
-        case int
-        case double
-        case string
+        case `Int`
+        case `Double`
+        case `String`
     }
     
     // MARK : Tokens

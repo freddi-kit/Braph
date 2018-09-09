@@ -20,23 +20,23 @@ class QForSeparator: Q {
 
 class QKeyWord: Q {
     
-    required init(typeStack: [DetectingType], count: Int) {
+    required init(typeStack: [DetectingToken], count: Int) {
         self.type = typeStack
         self.count = count
     }
     
-    enum DetectingType {
-        case int
-        case double
-        case string
-        case intaractive
+    enum DetectingToken {
+        case `Int`
+        case `Double`
+        case `String`
+        case `Intaractive`
         case `var`
         case `let`
         case `func`
         case `return`
     }
     
-    let type: [DetectingType]
+    let type: [DetectingToken]
     let count: Int
 }
 

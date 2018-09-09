@@ -12,9 +12,9 @@ import Foundation
 
 class LexicalAnalysisResources {
     static let nextStatusFromFirstChara:[Character: LexicalAnalysis.Status] = [
-        "I" : .accept(QKeyWord(typeStack: [.int, .intaractive], count: 1), .identifier("I")),
-        "D" : .accept(QKeyWord(typeStack: [.double], count: 1), .identifier("D")),
-        "S" : .accept(QKeyWord(typeStack: [.string], count: 1), .identifier("S")),
+        "I" : .accept(QKeyWord(typeStack: [.Int, .Intaractive], count: 1), .identifier("I")),
+        "D" : .accept(QKeyWord(typeStack: [.Double], count: 1), .identifier("D")),
+        "S" : .accept(QKeyWord(typeStack: [.String], count: 1), .identifier("S")),
         "v" : .accept(QKeyWord(typeStack: [.var], count: 1), .identifier("v")),
         "l" : .accept(QKeyWord(typeStack: [.let], count: 1), .identifier("l")),
         "f" : .accept(QKeyWord(typeStack: [.func], count: 1), .identifier("l")),
@@ -33,11 +33,11 @@ class LexicalAnalysisResources {
         " ", ":", ",", ".", "{", "}", "=", "+", "-"
     ]
     
-    static let detectingKeyWord: [QKeyWord.DetectingType: (string: String, token: Token.KeyWordType)] = [
-        .int : ("Int", .type),
-        .intaractive: ("Intaractive", .type),
-        .double : ("Double", .type),
-        .string : ("String", .type),
+    static let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: Token.KeyWordType)] = [
+        .Int : ("Int", .type),
+        .Intaractive: ("Intaractive", .type),
+        .Double : ("Double", .type),
+        .String : ("String", .type),
         .var : ("var", .define),
         .let : ("let", .define),
         .func : ("func", .define),
@@ -52,9 +52,9 @@ class LexicalAnalysisResources {
     
     static func literalChecker(input: Character) -> LexicalAnalysis.Status? {
         if numericLiterals.contains(input) {
-            return .accept(QForNumericLiteral(type: .int), .literal(.int, String(input)))
+            return .accept(QForNumericLiteral(type: .Int), .literal(.Int, String(input)))
         } else if stringLiterals.contains(input) {
-            return .normal(QForStringLiteral(), .literal(.string, String(input)))
+            return .normal(QForStringLiteral(), .literal(.String, String(input)))
         }
         return nil
     }
