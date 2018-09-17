@@ -11,7 +11,6 @@ import Foundation
 class SyntaxAnalysis {
     
     // MARK: Public functions
-    
     public func analysis(input :[TokenNode]) -> TokenTree? {
         return nil
     }

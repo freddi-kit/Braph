@@ -34,6 +34,10 @@ func main(){
     }
 }
 
+print(TokenTree.calcFollowUnion(token: TokenTree.TokenConstants.expr))
+print(TokenTree.calcFollowUnion(token: .factor))
+print(TokenTree.calcFollowUnion(token: .term))
+
 main()
 
 

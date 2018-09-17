@@ -23,16 +23,19 @@ class LexicalAnalysisResources {
         "=" : .accept(QForSymbol(), .symbol("=")),
         ":" : .accept(QForSymbol(), .symbol(":")),
         "," : .accept(QForSymbol(), .symbol(",")),
+        "." : .accept(QForSymbol(), .symbol(".")),
         ";" : .accept(QForSymbol(), .end),
         "{" : .accept(QForSymbol(), .parenthesis("{")),
         "}" : .accept(QForSymbol(), .parenthesis("}")),
         "(" : .accept(QForSymbol(), .parenthesis("(")),
         ")" : .accept(QForSymbol(), .parenthesis(")")),
         "+" : .accept(QForSymbol(), .operant(.plus, "+")),
-        "-" : .accept(QForSymbol(), .operant(.minus, "-"))
+        "-" : .accept(QForSymbol(), .operant(.plus, "-")),
+        "*" : .accept(QForSymbol(), .operant(.time, "*")),
+        "/" : .accept(QForSymbol(), .operant(.time, "/"))
     ]
     
-    static public let notAcceptableCharsAsIndet: [Character] = Array(" :;,.{}()=+-")
+    static public let notAcceptableCharsAsIndet: [Character] = Array(" :;,.{}()=+-:\'\"")
     
     static public let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: TokenNode.KeyWordType)] = [
         .Int : ("Int", .type),
