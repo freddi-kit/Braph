@@ -106,6 +106,21 @@ class SyntaxTree: Token {
         }
         return Array(Set(resultTokens))
     }
+    
+    
+    /// Closure集合を求める
+    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
+        var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+        resultUnion += [(lhs: lhs, rhs: rhs, point: point)]
+        if let pointingConstants = rhs[point] as? TokenConstants,
+            let sytaxes = definedSyntaxs[pointingConstants],
+            pointingConstants != lhs {
+            for syntax in sytaxes {
+                resultUnion += calcClosureUnion(lhs: pointingConstants, rhs: syntax.nodes, point: 0)
+            }
+        }
+        return resultUnion
+    }
 }
 
 // First、Follow向けの拡張
@@ -117,6 +132,7 @@ extension TokenNode: Equatable {
 
 // First、Follow向けの拡張
 extension TokenNode: Hashable {
+    // ○ね！！！！！！１
     var hashValue: Int {
         switch self {
         case let .keyword(keyWord, _):

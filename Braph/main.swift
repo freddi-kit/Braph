@@ -34,10 +34,6 @@ func main(){
     }
 }
 
-print(SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.expr))
-print(SyntaxTree.calcFollowUnion(token: .factor))
-print(SyntaxTree.calcFollowUnion(token: .term))
-
 main()
 
 
