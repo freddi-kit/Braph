@@ -35,17 +35,7 @@ func main(){
 }
 
 print(TokenConstants.expr)
-for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.expr) {
-    print(i)
-}
-
-print(TokenConstants.term)
-for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.term) {
-    print(i)
-}
-
-print(TokenConstants.factor)
-for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.factor) {
+for i in SyntaxAnalysisResources.calcClosureUnion(lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term], point: 0)! {
     print(i)
 }
 

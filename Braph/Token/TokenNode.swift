@@ -15,6 +15,20 @@ typealias TokenSequence = [TokenNode]
 protocol Token {
 }
 
+extension Token {
+    public func isEqualAndAllowNilAsSame(to: Token) -> Bool {
+        let tokens = (self, to)
+        switch tokens {
+        case let tokens as (TokenNode, TokenNode):
+            return tokens.0 == tokens.1
+        case let tokens as (TokenConstants, TokenConstants):
+            return tokens.0 == tokens.1
+        default:
+            return false
+        }
+    }
+}
+
 // いわゆる終端記号
 enum TokenNode: Token {
     
