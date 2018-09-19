@@ -47,10 +47,11 @@ enum TokenNode: Token {
     case operant(OperantType?, String?)
     case literal(LiteralType?, String?)
     case identifier(String?)
-    case symbol(String?)
+    case symbol(String)
     case parenthesis(String?)
     case separator
     case end
+    case `$`
     
     // これはセパレータですか？
     public func isSeparator() -> Bool {
