@@ -53,26 +53,14 @@ enum TokenNode: Token {
     case end
     case `$`
     
-    // これはセパレータですか？
+    /// ご注文はセパレータですか？
+    /// いらなくね？
     public func isSeparator() -> Bool {
         switch self {
         case .separator:
             return true
         default:
             return false
-        }
-    }
-}
-
-extension Set {
-    static func += (lhs: inout Set<Element>, rhs: [Element]) {
-        for value in rhs {
-            lhs.insert(value)
-        }
-    }
-    static func += (lhs: inout Set<Element>, rhs: Set<Element>) {
-        for value in rhs {
-            lhs.insert(value)
         }
     }
 }

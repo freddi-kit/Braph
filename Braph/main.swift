@@ -34,18 +34,18 @@ func main(){
     }
 }
 
-print(SyntaxTree.TokenConstants.expr)
-for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.expr) {
+print(TokenConstants.expr)
+for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.expr) {
     print(i)
 }
 
-print(SyntaxTree.TokenConstants.term)
-for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.term) {
+print(TokenConstants.term)
+for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.term) {
     print(i)
 }
 
-print(SyntaxTree.TokenConstants.factor)
-for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.factor) {
+print(TokenConstants.factor)
+for i in SyntaxAnalysisResources.calcFollowUnion(token: TokenConstants.factor) {
     print(i)
 }
 
