@@ -23,14 +23,21 @@ class SyntaxTree: Token {
     
     // いわゆる非終端記号
     enum TokenConstants: Int, Token {
-        case start
-        case exprDash
         case expr
         case term
         case factor
         case define
         case function
         case arg
+        
+        public func isStart() -> Bool {
+            switch self {
+            case .expr, .define:
+                return true
+            default:
+                return false
+            }
+        }
     }
     
     // MARK: Initialization
@@ -47,10 +54,6 @@ class SyntaxTree: Token {
     
     // 文法の宣言
     public static let definedSyntaxs: [TokenConstants: [SyntaxTree]] = [
-        .start : [
-            .init([TokenConstants.expr]),
-            .init([TokenConstants.define])
-        ],
         .define : [
             .init([TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr])
         ],
@@ -88,25 +91,25 @@ class SyntaxTree: Token {
     }
     
     /// Follow集合を求める
-    public static func calcFollowUnion(token: TokenConstants, isStart: Bool = true) -> Array<TokenNode> {
-        var resultTokens: Array<TokenNode> = []
+    public static func calcFollowUnion(token: TokenConstants) -> Array<TokenNode> {
+        var resultTokens: [TokenNode] = []
+        if token.isStart() {
+            resultTokens += [TokenNode.`$`]
+        }
         for definedSyntaxKey in definedSyntaxs.keys {
-            if isStart {
-                resultTokens += [TokenNode.`$`]
-            }
             guard let tokenTrees = definedSyntaxs[definedSyntaxKey] else { continue }
             for tokenTree in tokenTrees {
                 for index in 0..<tokenTree.nodes.count {
                     if let nodeToConstants = tokenTree.nodes[index] as? TokenConstants, nodeToConstants == token {
                         if index + 1 < tokenTree.nodes.count {
-                            if let node = tokenTree.nodes[index + 1] as? TokenNode {
-                                resultTokens += [node]
-                            } else if let node = tokenTree.nodes[index + 1] as? TokenConstants {
-                                resultTokens += calcFirstUnion(token: node)
+                            if let token = tokenTree.nodes[index + 1] as? TokenNode {
+                                resultTokens += [token]
+                            } else if let token = tokenTree.nodes[index + 1] as? TokenConstants {
+                                resultTokens += calcFirstUnion(token: token)
                             }
                         }
                         if index == tokenTree.nodes.count - 1 {
-                            resultTokens += calcFollowUnion(token: definedSyntaxKey, isStart: false)
+                            resultTokens += calcFollowUnion(token: definedSyntaxKey)
                         }
                     }
                 }

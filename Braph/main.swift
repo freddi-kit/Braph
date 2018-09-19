@@ -34,6 +34,21 @@ func main(){
     }
 }
 
+print(SyntaxTree.TokenConstants.expr)
+for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.expr) {
+    print(i)
+}
+
+print(SyntaxTree.TokenConstants.term)
+for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.term) {
+    print(i)
+}
+
+print(SyntaxTree.TokenConstants.factor)
+for i in SyntaxTree.calcFollowUnion(token: SyntaxTree.TokenConstants.factor) {
+    print(i)
+}
+
 main()
 
 
