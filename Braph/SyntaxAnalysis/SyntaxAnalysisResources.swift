@@ -8,6 +8,7 @@
 
 import Foundation
 
+// TODO: 自動生成スクリプトの作成
 
 class SyntaxAnalysisResources {
     
@@ -57,7 +58,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// Follow集合を求める
-    public static func calcFollowUnion(token: TokenConstants) -> Array<TokenNode> {
+    public static func calcFollowUnion(token: TokenConstants) -> [TokenNode] {
         var resultTokens: [TokenNode] = []
         if token.isStart() {
             resultTokens += [TokenNode.`$`]
@@ -86,7 +87,8 @@ extension SyntaxAnalysisResources {
     
     
     /// Closure集合を求める
-    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
+    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [(lhs: TokenConstants, rhs: [Token], point: Int)]? {
+        
         var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
         if point >= rhs.count {
             return resultUnion
@@ -96,7 +98,10 @@ extension SyntaxAnalysisResources {
             let sytaxes = definedSyntaxs[pointingConstants],
             pointingConstants != lhs {
             for syntax in sytaxes {
-                resultUnion += calcClosureUnion(lhs: pointingConstants, rhs: syntax.nodes, point: 0)
+                guard let calcedUnion = calcClosureUnion(lhs: pointingConstants, rhs: syntax.nodes, point: 0) else {
+                    return nil
+                }
+                resultUnion += calcedUnion
             }
         }
         return resultUnion
@@ -107,7 +112,7 @@ extension SyntaxAnalysisResources {
         var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
         return resultUnion
     }
-    
+    /// Set使えないための対策
     private static func reduceSameElementFromTokenNodeUnion(array: [TokenNode]) -> [TokenNode] {
         var result:[TokenNode] = []
         for element in array {
@@ -117,8 +122,32 @@ extension SyntaxAnalysisResources {
         }
         return result
     }
+    
+    /// Closureで不正な文法渡すの防止
+    private static func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
+        guard let definedRhs = definedSyntaxs[lhs] else {
+            return false
+        }
+        
+        for syntax in definedRhs {
+            if let hasSyntax = rhs.combine(syntax.nodes)?.reduce(true, { (beforeResult, tokens) -> Bool in
+                switch tokens {
+                case let tokens as (TokenNode, TokenNode):
+                    return tokens.0 == tokens.1
+                case let tokens as (TokenConstants, TokenConstants):
+                    return tokens.0 == tokens.1
+                default:
+                    return false
+                }
+            }) {
+                if hasSyntax == true {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }
-
 
 
 extension TokenNode: Equatable {
@@ -164,6 +193,20 @@ extension TokenNode: Equatable {
         default:
             return false
         }
+    }
+}
+
+extension Collection {
+    func combine<C: Collection>(_ collection: C) -> [(Element, Element)]? where C.Element == Element {
+        guard collection.count == self.count, let castedSelf = self as? [Element], let collection = collection as? [Element] else {
+            return nil
+        }
+        var result: [(Element, Element)] = []
+        for index in 0..<collection.count {
+            result.append((castedSelf[index], collection[index]))
+        }
+        
+        return result
     }
 }
 
