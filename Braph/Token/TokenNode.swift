@@ -20,7 +20,7 @@ extension Token {
         let tokens = (self, to)
         switch tokens {
         case let tokens as (TokenNode, TokenNode):
-            return tokens.0 == tokens.1
+            return tokens.0.isEqualAllowNilAsSame(tokens.1)
         case let tokens as (TokenConstants, TokenConstants):
             return tokens.0 == tokens.1
         default:
@@ -31,6 +31,9 @@ extension Token {
 
 // いわゆる終端記号
 enum TokenNode: Token {
+    
+    // MARK: Check now analysis
+    static private var isLexicalAnalysisNow: Bool = true
     
     // MARK: Token Types
     

@@ -85,7 +85,7 @@ extension SyntaxAnalysisResources {
         return reduceSameElementFromTokenNodeUnion(array: resultTokens)
     }
     
-    private static func isSameTokenArrayNodeAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
+    private static func isSameTokenNodeArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
         guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
             return tokens.0.isEqualAndAllowNilAsSame(to: tokens.1)
         }) else {
@@ -101,15 +101,15 @@ extension SyntaxAnalysisResources {
             return nil
         }
         var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+        resultUnion += [(lhs: lhs, rhs: rhs, point: point)]
         if point == rhs.count {
             return resultUnion
         }
-        resultUnion += [(lhs: lhs, rhs: rhs, point: point)]
         let pointingToken = rhs[point]
         if let pointingToken = pointingToken as? TokenConstants, let definedSyntax = definedSyntaxs[pointingToken] {
             for syntax in definedSyntax {
                 if pointingToken == lhs {
-                    if isSameTokenArrayNodeAllowNilAsSame(rhs, syntax.nodes) {
+                    if isSameTokenNodeArrayAllowNilAsSame(rhs, syntax.nodes) {
                         continue
                     }
                 }
@@ -120,12 +120,23 @@ extension SyntaxAnalysisResources {
             }
         }
         
-        return resultUnion
+        return reduceSameElementFromTokenSyntaxUnion(array: resultUnion)
     }
     
     /// Goto集合を求める
-    public static func calcGotoUnion(i: [(lhs: TokenConstants, rhs: [Token], point: Int)], forcusToken: Token) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
+    public static func calcGotoUnion(i: [(lhs: TokenConstants, rhs: [Token], point: Int)], forcusToken: Token) -> [(lhs: TokenConstants, rhs: [Token], point: Int)]? {
+        
         var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+        
+        for pointedSyntax in i {
+            if pointedSyntax.point < pointedSyntax.rhs.count && pointedSyntax.rhs[pointedSyntax.point].isEqualAndAllowNilAsSame(to: forcusToken) {
+                guard let calcedUnion = calcClosureUnion(lhs: pointedSyntax.lhs, rhs: pointedSyntax.rhs, point: pointedSyntax.point + 1) else {
+                    return nil
+                }
+                resultUnion += calcedUnion
+            }
+        }
+        
         return resultUnion
     }
 
@@ -133,9 +144,10 @@ extension SyntaxAnalysisResources {
     private static func reduceSameElementFromTokenSyntaxUnion(array: [(lhs: TokenConstants, rhs: [Token], point: Int)]) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
         var result:[(lhs: TokenConstants, rhs: [Token], point: Int)] = []
         for element in array {
-            if !result.contains(where: { arg -> Bool in
-                return arg.lhs == element.lhs && arg.point == element.point
-            }) {
+            if !result.contains(where: {
+                $0.point == element.point &&
+                $0.lhs == element.lhs &&
+                isSameTokenNodeArrayAllowNilAsSame($0.rhs, element.rhs) }) {
                 result.append(element)
             }
         }
@@ -146,7 +158,7 @@ extension SyntaxAnalysisResources {
     private static func reduceSameElementFromTokenNodeUnion(array: [TokenNode]) -> [TokenNode] {
         var result:[TokenNode] = []
         for element in array {
-            if !result.contains(element) {
+            if !result.contains(where: { element.isEqualAllowNilAsSame($0) }) {
                 result.append(element)
             }
         }
@@ -173,10 +185,10 @@ extension SyntaxAnalysisResources {
 }
 
 
-extension TokenNode: Equatable {
+extension TokenNode {
     // MARK: First、Follow向けの拡張
     
-    static private func compareAndNilAsSame<E1: Equatable, E2: Equatable>(ll: E1?, lr: E2?, rl: E1?, rr: E2?) -> Bool {
+    private func compareAllowNilAsSame<E1: Equatable, E2: Equatable>(ll: E1?, lr: E2?, rl: E1?, rr: E2?) -> Bool {
         let isLvalueIsNull = (ll == nil || rl == nil)
         let isRvalueIsNull = (lr == nil || rr == nil)
         if isLvalueIsNull && isRvalueIsNull {
@@ -188,15 +200,15 @@ extension TokenNode: Equatable {
         return ll == rl
     }
     
-    static func == (lhs: TokenNode, rhs: TokenNode) -> Bool {
+    public func isEqualAllowNilAsSame(_ rhs: TokenNode) -> Bool {
         
-        switch (lhs, rhs) {
+        switch (self, rhs) {
         case (.keyword(let ll, let lr), .keyword(let rl, let rr)):
-            return compareAndNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
+            return compareAllowNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
         case (.operant(let ll, let lr), .operant(let rl, let rr)):
-            return compareAndNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
+            return compareAllowNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
         case (.literal(let ll, let lr), .literal(let rl, let rr)):
-            return compareAndNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
+            return compareAllowNilAsSame(ll: ll, lr: lr, rl: rl, rr: rr)
         case (.identifier(let l), .identifier(let r)):
             if l == nil || r == nil {
                 return true

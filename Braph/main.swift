@@ -34,9 +34,14 @@ func main(){
     }
 }
 
-print(TokenConstants.expr)
-for i in SyntaxAnalysisResources.calcClosureUnion(lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term], point: 0)! {
-    print(i)
+if let union = SyntaxAnalysisResources.calcClosureUnion(lhs: .define, rhs: [TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr], point: 2) {
+    for i in union {
+        print(i)
+    }
+    print()
+    for i in SyntaxAnalysisResources.calcGotoUnion(i: union, forcusToken: TokenNode.symbol("="))! {
+        print(i)
+    }
 }
 
 main()
