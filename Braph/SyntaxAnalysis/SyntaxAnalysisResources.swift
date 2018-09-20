@@ -14,24 +14,34 @@ class SyntaxAnalysisResources {
     
     // MARK: Constants
     
-    // 文法の宣言
-    public static let definedSyntaxs: [TokenConstants: [SyntaxTree]] = [
-        .define : [
-            .init([TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr])
-        ],
-        .expr : [
-            .init([TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
-            .init([TokenConstants.term])
-        ],
-        .term : [
-            .init([TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
-            .init([TokenConstants.factor])
-        ],
-        .factor :  [
-            .init([TokenNode.literal(nil, nil)]),
-            .init([TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")])
-        ]
+    public static let definedSyntaxs: [(lhs: TokenConstants, rhs: [Token])] = [
+        (lhs: .define, rhs: [TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr]),
+        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
+        (lhs: .expr, rhs: [TokenConstants.term]),
+        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
+        (lhs: .term, rhs: [TokenConstants.factor]),
+        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
+        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)])
     ]
+    
+    // 文法の宣言
+//    public static let definedSyntaxs: [TokenConstants: [SyntaxTree]] = [
+//        .define : [
+//            .init([TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr])
+//        ],
+//        .expr : [
+//            .init([TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
+//            .init([TokenConstants.term])
+//        ],
+//        .term : [
+//            .init([TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
+//            .init([TokenConstants.factor])
+//        ],
+//        .factor :  [
+//            .init([TokenNode.literal(nil, nil)]),
+//            .init([TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")])
+//        ]
+//    ]
 }
 
 extension SyntaxAnalysisResources {
@@ -41,12 +51,13 @@ extension SyntaxAnalysisResources {
     /// First集合を求める
     public static func calcFirstUnion(token: Token) -> [TokenNode] {
         var resultTokens: Array<TokenNode> = []
-        if let token = token as? TokenConstants, let rightTokensTrees = definedSyntaxs[token] {
-            for rightTokensTree in rightTokensTrees {
-                if let rightToken = rightTokensTree.nodes.first as? TokenConstants,
+        if let token = token as? TokenConstants {
+            let definedMatchLhsSyntaxs = definedSyntaxs.filter{ $0.lhs == token }
+            for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
+                if let rightToken = definedMatchLhsSyntax.rhs.first as? TokenConstants,
                     rightToken != token {
                     resultTokens += calcFirstUnion(token: rightToken)
-                } else if let rightToken = rightTokensTree.nodes.first as? TokenNode  {
+                } else if let rightToken = definedMatchLhsSyntax.rhs.first as? TokenNode  {
                     resultTokens += [rightToken]
                 }
             }
@@ -63,20 +74,23 @@ extension SyntaxAnalysisResources {
         if token.isStart() {
             resultTokens += [TokenNode.`$`]
         }
-        for definedSyntaxKey in definedSyntaxs.keys {
-            guard let tokenTrees = definedSyntaxs[definedSyntaxKey] else { continue }
-            for tokenTree in tokenTrees {
-                for index in 0..<tokenTree.nodes.count {
-                    if let nodeToConstants = tokenTree.nodes[index] as? TokenConstants, nodeToConstants == token {
-                        if index + 1 < tokenTree.nodes.count {
-                            if let token = tokenTree.nodes[index + 1] as? TokenNode {
+        
+        let definedSyntaxLhses = definedSyntaxs.map{ $0.lhs }
+        
+        for definedSyntaxLhs in definedSyntaxLhses {
+            let definedMatchLhsSyntaxs = definedSyntaxs.filter{ $0.lhs == definedSyntaxLhs }
+            for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
+                for index in 0..<definedMatchLhsSyntax.rhs.count {
+                    if let nodeToConstants = definedMatchLhsSyntax.rhs[index] as? TokenConstants, nodeToConstants == token {
+                        if index + 1 < definedMatchLhsSyntax.rhs.count {
+                            if let token =  definedMatchLhsSyntax.rhs[index + 1] as? TokenNode {
                                 resultTokens += [token]
-                            } else if let token = tokenTree.nodes[index + 1] as? TokenConstants {
+                            } else if let token =  definedMatchLhsSyntax.rhs[index + 1] as? TokenConstants {
                                 resultTokens += calcFirstUnion(token: token)
                             }
                         }
-                        if index == tokenTree.nodes.count - 1 {
-                            resultTokens += calcFollowUnion(token: definedSyntaxKey)
+                        if index ==  definedMatchLhsSyntax.rhs.count - 1 {
+                            resultTokens += calcFollowUnion(token: definedSyntaxLhs)
                         }
                     }
                 }
@@ -106,14 +120,15 @@ extension SyntaxAnalysisResources {
             return resultUnion
         }
         let pointingToken = rhs[point]
-        if let pointingToken = pointingToken as? TokenConstants, let definedSyntax = definedSyntaxs[pointingToken] {
+        if let pointingToken = pointingToken as? TokenConstants {
+            let definedSyntax = definedSyntaxs.filter{ $0.lhs == pointingToken }
             for syntax in definedSyntax {
                 if pointingToken == lhs {
-                    if isSameTokenNodeArrayAllowNilAsSame(rhs, syntax.nodes) {
+                    if isSameTokenNodeArrayAllowNilAsSame(rhs, syntax.rhs) {
                         continue
                     }
                 }
-                guard let calcedClosureUnion = calcClosureUnion(lhs: pointingToken, rhs: syntax.nodes, point: 0) else {
+                guard let calcedClosureUnion = calcClosureUnion(lhs: pointingToken, rhs: syntax.rhs, point: 0) else {
                     return nil
                 }
                 resultUnion += calcedClosureUnion
@@ -167,12 +182,10 @@ extension SyntaxAnalysisResources {
     
     /// Closureで不正な文法渡すの防止
     private static func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
-        guard let definedRhs = definedSyntaxs[lhs] else {
-            return false
-        }
+        let definedRhs = definedSyntaxs.filter{ $0.lhs == lhs }
         
         for syntax in definedRhs {
-            if let hasSyntax = rhs.combine(syntax.nodes)?.reduce(true, { (beforeResult, tokens) -> Bool in
+            if let hasSyntax = rhs.combine(syntax.rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
                 return tokens.0.isEqualAndAllowNilAsSame(to: tokens.1)
             }) {
                 if hasSyntax == true {
