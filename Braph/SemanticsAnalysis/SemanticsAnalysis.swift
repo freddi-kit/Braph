@@ -7,3 +7,29 @@
 //
 
 import Foundation
+
+class SemanticsAnalysis {
+    
+    
+    public func analysis(input syntaxTrees: [SyntaxTree]) -> [String]? {
+        for syntaxTree in syntaxTrees {
+            syntaxTree.printTree()
+            
+            if syntaxTree.head == .statement {
+                for node in syntaxTree.tree {
+                    if let nodeTree = node as? SyntaxTree {
+                        switch nodeTree.head {
+                        case .declaration:
+                            print("declaration")
+                        case .return:
+                            print("return")
+                        default: break
+                        }
+                    }
+                }
+            }
+            
+        }
+        return nil
+    }
+}

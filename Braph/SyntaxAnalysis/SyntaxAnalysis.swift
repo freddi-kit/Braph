@@ -26,7 +26,9 @@ class SyntaxAnalysis {
         var inputTokenIndex = 0
         var resultSyntaxs: [SyntaxAnalysisResources.GenerateRule] = []
         
+        
         while inputTokenIndex < inputTokens.count {
+            
             let inputToken = inputTokens[inputTokenIndex]
             guard let nowStatus = nowStatusStack.last else {
                 break
@@ -37,11 +39,19 @@ class SyntaxAnalysis {
             guard let action = getFromActionSheet.first else {
                 return nil
             }
+            
+            print(action)
+            
             if action.isAccept == true {
                 print("accepted!")
-                let resultTree: SyntaxTree = .init([])
-                for resultSyntax in resultSyntaxs.reversed() {
-                    resultTree.addRhsToTree(addFrom: resultSyntax)
+                print()
+                
+                resultSyntaxs = resultSyntaxs.reversed()
+                let resultIndex = 0
+                let resultTree: SyntaxTree = .init(head: resultSyntaxs[resultIndex].lhs, tree: resultSyntaxs[resultIndex].rhs)
+                
+                for resultIndex in 0..<resultSyntaxs.count {
+                    resultTree.addRhsToTree(addFrom: resultSyntaxs[resultIndex])
                 }
                 resultTree.setInput(input: inputTokens)
                 return resultTree

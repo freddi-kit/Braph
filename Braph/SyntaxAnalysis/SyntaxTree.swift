@@ -13,24 +13,32 @@ class SyntaxTree: Token {
     
     // MARK: Initialization
     
-    init(_ tree: [Token]) {
+    init(head: TokenConstants, tree: [Token]) {
         self.tree = tree
+        self.head = head
     }
     
     // MARK: Public Values
     // 木構造
     public var tree: [Token]
+    public var head: TokenConstants
     
+    private func showRoute(depth: Int) {
+        if depth != 0 {
+            for _ in 0..<depth {
+                print(" ", terminator: "")
+            }
+        }
+    }
     /// 木構造表示
     public func printTree(depth: Int = 0){
+        showRoute(depth: depth)
+        print(self.head)
         for node in tree {
-            for _ in 0..<depth {
-                print("○", terminator: "")
-            }
             if let insideTree = node as? SyntaxTree {
-                print("tree")
                 insideTree.printTree(depth: depth + 1)
             } else {
+                showRoute(depth: depth+1)
                 print(node)
             }
         }
@@ -46,7 +54,7 @@ class SyntaxTree: Token {
                     subTree.addRhsToTree(addFrom: addFrom)
                 }
                 if tree[treeIndex].isEqualAllowNilAsSame(to: addFrom.lhs) {
-                    tree[treeIndex] = SyntaxTree.init(addFrom.rhs)
+                    tree[treeIndex] = SyntaxTree.init(head: addFrom.lhs, tree: addFrom.rhs)
                 }
             }
         }
