@@ -12,6 +12,10 @@ import Foundation
 
 class SyntaxAnalysisResources {
     
+    // MARK: LR項
+    typealias LR0Term = (lhs: TokenConstants, rhs: [Token], point: Int)
+    typealias LR1Term = (lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode])
+    
     // MARK: Constants
     
     public static let definedSyntaxs: [(lhs: TokenConstants, rhs: [Token])] = [
@@ -64,6 +68,7 @@ class SyntaxAnalysisResources {
 extension SyntaxAnalysisResources {
     
     // MARK: Functions
+    
 
     /// First集合を求める
     public static func calcFirstUnion(token: Token) -> [TokenNode] {
@@ -117,11 +122,11 @@ extension SyntaxAnalysisResources {
     }
     
     /// Closure集合を求める
-    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [(lhs: TokenConstants, rhs: [Token], point: Int)]? {
+    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [LR0Term]? {
         guard hasDefinedSyntax(lhs: lhs, rhs: rhs), point <= rhs.count else {
             return nil
         }
-        var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+        var resultUnion: [LR0Term] = []
         resultUnion += [(lhs: lhs, rhs: rhs, point: point)]
         if point == rhs.count {
             return resultUnion
@@ -145,10 +150,68 @@ extension SyntaxAnalysisResources {
         return reduceSameElementFromTokenSyntaxUnion(array: resultUnion)
     }
     
-    /// Goto集合を求める
-    public static func calcGotoUnion(i: [(lhs: TokenConstants, rhs: [Token], point: Int)], forcusToken: Token) -> [(lhs: TokenConstants, rhs: [Token], point: Int)]? {
+    /// Closure集合を求める
+    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int, core: TokenNode) -> [LR1Term]? {
+        guard hasDefinedSyntax(lhs: lhs, rhs: rhs), point <= rhs.count else {
+            return nil
+        }
+        var resultUnion: [LR1Term] = []
+        resultUnion += [(lhs: lhs, rhs: rhs, point: point, core: [core])]
+        if point == rhs.count {
+            return resultUnion
+        }
+        let pointingToken = rhs[point]
+        if let pointingToken = pointingToken as? TokenConstants {
+            let definedSyntax = definedSyntaxs.filter{ $0.lhs == pointingToken }
+            for syntax in definedSyntax {
+                if pointingToken == lhs && isSameTokenArrayAllowNilAsSame(rhs, syntax.rhs) {
+                    continue
+                }
+                var newCores:[TokenNode] = []
+                if point + 1 < rhs.count {
+                    newCores += calcFirstUnion(token: rhs[point + 1])
+                } else {
+                    newCores.append(core)
+                }
+                
+                
+                for newCore in newCores {
+                    resultUnion += [(lhs: lhs, rhs: rhs, point: point, core: [newCore])]
+                    guard let calcedClosureUnion = calcClosureUnion(lhs: syntax.lhs, rhs: syntax.rhs, point: 0, core: newCore) else {
+                        return nil
+                    }
+                    resultUnion += calcedClosureUnion
+                }
+                
+            }
+        }
         
-        var resultUnion: [(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+        return reduceSameElementFromTokenSyntaxUnion(array: resultUnion)
+    }
+    
+    public static func calcCombinedClosureUnion(in union: [LR1Term]) -> [LR1Term] {
+        var result:[LR1Term] = []
+        var isCoreAppended = false
+        for indexUnion in 0..<union.count {
+            for indexResult in 0..<result.count {
+                if result[indexResult].lhs == union[indexUnion].lhs
+                    && isSameTokenArrayAllowNilAsSame(result[indexResult].rhs, union[indexUnion].rhs) {
+                    result[indexResult].core += union[indexUnion].core
+                    isCoreAppended = true
+                }
+            }
+            if !isCoreAppended {
+                result.append(union[indexUnion])
+            }
+            isCoreAppended = false
+        }
+        return result
+    }
+    
+    /// Goto集合を求める
+    public static func calcGotoUnion(i: [LR0Term], forcusToken: Token) -> [LR0Term]? {
+        
+        var resultUnion: [LR0Term] = []
         
         for pointedSyntax in i {
             if pointedSyntax.point < pointedSyntax.rhs.count && pointedSyntax.rhs[pointedSyntax.point].isEqualAndAllowNilAsSame(to: forcusToken) {
@@ -162,23 +225,78 @@ extension SyntaxAnalysisResources {
         return resultUnion
     }
     
+    // 正準オートマトンの配列を求める
+    public static func calcAutomataAtDefinedSyntax() -> [[LR0Term]]? {
+        var resultClosureUnion:[[LR0Term]] = []
+        var X:[[LR0Term]] = []
+        var Y:[[LR0Term]] = []
+        
+        guard let firstStatus = calcClosureUnion(lhs: .start, rhs: [TokenConstants.expr], point: 0) else {
+            return nil
+        }
+        
+        X.append(firstStatus)
+        
+        guard let x = X.popLast() else {
+            return nil
+        }
+        Y.append(x)
+        
+        resultClosureUnion.append(firstStatus)
+        for syntax in firstStatus {
+            guard let gotoUnion = calcGotoUnion(i: firstStatus, forcusToken: syntax.rhs[syntax.point]) else {
+                return nil
+            }
+            if resultClosureUnion.reduce(true, { (result, arg) -> Bool in
+                return result && !isSameClosureUnion(i1: arg, i2: gotoUnion)
+            }) {
+                resultClosureUnion.append(gotoUnion)
+            }
+        }
+        
+        return resultClosureUnion
+    }
+    
     /// 同じクロージャ集合？
-    public static func isSameClosureUnion(i1: [(lhs: TokenConstants, rhs: [Token], point: Int)], i2: [(lhs: TokenConstants, rhs: [Token], point: Int)]) -> Bool {
+    public static func isSameClosureUnion(i1: [LR0Term], i2: [LR0Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
             return result && arg.0.lhs.isEqualAndAllowNilAsSame(to: arg.1.lhs)
-                && arg.0.lhs.isEqualAndAllowNilAsSame(to: arg.1.lhs)
                 && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+                && arg.0.point == arg.1.point
+        }) ?? false
+    }
+    
+    /// 同じクロージャ集合？
+    public static func isSameClosureUnion(i1: [LR1Term], i2: [LR1Term]) -> Bool {
+        return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
+            return result && arg.0.lhs ==  arg.1.lhs
+                && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+                && arg.0.point == arg.1.point
+                && isSameTokenArrayAllowNilAsSame(arg.0.core, arg.1.core)
         }) ?? false
     }
 
     /// Set使えないための対策１
-    private static func reduceSameElementFromTokenSyntaxUnion(array: [(lhs: TokenConstants, rhs: [Token], point: Int)]) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
-        var result:[(lhs: TokenConstants, rhs: [Token], point: Int)] = []
+    private static func reduceSameElementFromTokenSyntaxUnion(array: [LR0Term]) -> [LR0Term] {
+        var result:[LR0Term] = []
         for element in array {
             if !result.contains(where: {
-                $0.point == element.point &&
-                $0.lhs == element.lhs &&
-                isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs) }) {
+                $0.point == element.point && $0.lhs == element.lhs
+                    && isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs) }) {
+                result.append(element)
+            }
+        }
+        return result
+    }
+    
+    private static func reduceSameElementFromTokenSyntaxUnion(array: [LR1Term]) -> [LR1Term] {
+        var result:[LR1Term] = []
+        for element in array {
+            if !result.contains(where: {
+                $0.lhs ==  element.lhs
+                    && isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs)
+                    && $0.point == element.point
+                    && isSameTokenArrayAllowNilAsSame($0.core, element.core) }) {
                 result.append(element)
             }
         }

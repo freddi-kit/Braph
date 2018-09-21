@@ -34,16 +34,16 @@ func main(){
     }
 }
 
-
-//if let union = SyntaxAnalysisResources.calcClosureUnion(lhs: .define, rhs: [TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr], point: 2) {
-//    for i in union {
-//        print(i)
-//    }
-//    print()
-//    for i in SyntaxAnalysisResources.calcGotoUnion(i: union, forcusToken: TokenNode.symbol("="))! {
-//        print(i)
-//    }
-//}
+if let a = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs: [TokenConstants.expr], point: 0, core: TokenNode.`$`) {
+    let m = SyntaxAnalysisResources.calcCombinedClosureUnion(in: a)
+    print(m.count)
+    for i in m  {
+        print(i.lhs)
+        print(i.rhs)
+        print(i.core)
+        print()
+    }
+}
 
 main()
 
