@@ -44,25 +44,6 @@ class SyntaxAnalysisResources {
         (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
         (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr])
     ]
-    
-    // 文法の宣言
-//    public static let definedSyntaxs: [TokenConstants: [SyntaxTree]] = [
-//        .define : [
-//            .init([TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr])
-//        ],
-//        .expr : [
-//            .init([TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
-//            .init([TokenConstants.term])
-//        ],
-//        .term : [
-//            .init([TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
-//            .init([TokenConstants.factor])
-//        ],
-//        .factor :  [
-//            .init([TokenNode.literal(nil, nil)]),
-//            .init([TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")])
-//        ]
-//    ]
 }
 
 extension SyntaxAnalysisResources {
@@ -151,42 +132,41 @@ extension SyntaxAnalysisResources {
     }
     
     /// Closure集合を求める
-    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int, core: TokenNode) -> [LR1Term]? {
+    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode]) -> [LR1Term]? {
         guard hasDefinedSyntax(lhs: lhs, rhs: rhs), point <= rhs.count else {
             return nil
         }
         var resultUnion: [LR1Term] = []
-        resultUnion += [(lhs: lhs, rhs: rhs, point: point, core: [core])]
+        resultUnion += [(lhs: lhs, rhs: rhs, point: point, core: core)]
+        
         if point == rhs.count {
             return resultUnion
         }
+        
+        var newCores:[TokenNode] = []
+        if point + 1 < rhs.count {
+            newCores += calcFirstUnion(token: rhs[point + 1])
+        } else {
+            newCores += core
+        }
+       
+        
         let pointingToken = rhs[point]
         if let pointingToken = pointingToken as? TokenConstants {
             let definedSyntax = definedSyntaxs.filter{ $0.lhs == pointingToken }
             for syntax in definedSyntax {
-                if pointingToken == lhs && isSameTokenArrayAllowNilAsSame(rhs, syntax.rhs) {
+                if pointingToken == lhs && isSameTokenArrayAllowNilAsSame(rhs, syntax.rhs) && isSameTokenArrayAllowNilAsSame(newCores, core)  {
                     continue
                 }
-                var newCores:[TokenNode] = []
-                if point + 1 < rhs.count {
-                    newCores += calcFirstUnion(token: rhs[point + 1])
-                } else {
-                    newCores.append(core)
+                
+                guard let calcedClosureUnion = calcClosureUnion(lhs: syntax.lhs, rhs: syntax.rhs, point: 0, core: newCores) else {
+                    return nil
                 }
-                
-                
-                for newCore in newCores {
-                    resultUnion += [(lhs: lhs, rhs: rhs, point: point, core: [newCore])]
-                    guard let calcedClosureUnion = calcClosureUnion(lhs: syntax.lhs, rhs: syntax.rhs, point: 0, core: newCore) else {
-                        return nil
-                    }
-                    resultUnion += calcedClosureUnion
-                }
-                
+                resultUnion += calcedClosureUnion
             }
         }
         
-        return reduceSameElementFromTokenSyntaxUnion(array: resultUnion)
+        return calcCombinedClosureUnion(in: resultUnion)
     }
     
     public static func calcCombinedClosureUnion(in union: [LR1Term]) -> [LR1Term] {
@@ -195,8 +175,10 @@ extension SyntaxAnalysisResources {
         for indexUnion in 0..<union.count {
             for indexResult in 0..<result.count {
                 if result[indexResult].lhs == union[indexUnion].lhs
-                    && isSameTokenArrayAllowNilAsSame(result[indexResult].rhs, union[indexUnion].rhs) {
+                    && isSameTokenArrayAllowNilAsSame(result[indexResult].rhs, union[indexUnion].rhs)
+                    && result[indexResult].point == union[indexUnion].point {
                     result[indexResult].core += union[indexUnion].core
+                    result[indexResult].core = reduceSameElementFromTokenNodeUnion(array: result[indexResult].core)
                     isCoreAppended = true
                 }
             }
@@ -205,59 +187,30 @@ extension SyntaxAnalysisResources {
             }
             isCoreAppended = false
         }
-        return result
+        return reduceSameElementFromTokenSyntaxUnion(array: result)
     }
     
     /// Goto集合を求める
-    public static func calcGotoUnion(i: [LR0Term], forcusToken: Token) -> [LR0Term]? {
+    public static func calcGotoUnion(i: [LR1Term], forcusToken: Token) -> [LR1Term]? {
         
-        var resultUnion: [LR0Term] = []
+        var resultUnion: [LR1Term] = []
         
         for pointedSyntax in i {
-            if pointedSyntax.point < pointedSyntax.rhs.count && pointedSyntax.rhs[pointedSyntax.point].isEqualAndAllowNilAsSame(to: forcusToken) {
-                guard let calcedUnion = calcClosureUnion(lhs: pointedSyntax.lhs, rhs: pointedSyntax.rhs, point: pointedSyntax.point + 1) else {
+            if pointedSyntax.point <= pointedSyntax.rhs.count && pointedSyntax.rhs[pointedSyntax.point].isEqualAndAllowNilAsSame(to: forcusToken) {
+                guard let calcedUnion = calcClosureUnion(lhs: pointedSyntax.lhs,
+                                                         rhs: pointedSyntax.rhs,
+                                                         point: pointedSyntax.point + 1,
+                                                         core: pointedSyntax.core) else {
                     return nil
                 }
                 resultUnion += calcedUnion
             }
         }
         
-        return resultUnion
+        return calcCombinedClosureUnion(in: resultUnion)
     }
     
-    // 正準オートマトンの配列を求める
-    public static func calcAutomataAtDefinedSyntax() -> [[LR0Term]]? {
-        var resultClosureUnion:[[LR0Term]] = []
-        var X:[[LR0Term]] = []
-        var Y:[[LR0Term]] = []
-        
-        guard let firstStatus = calcClosureUnion(lhs: .start, rhs: [TokenConstants.expr], point: 0) else {
-            return nil
-        }
-        
-        X.append(firstStatus)
-        
-        guard let x = X.popLast() else {
-            return nil
-        }
-        Y.append(x)
-        
-        resultClosureUnion.append(firstStatus)
-        for syntax in firstStatus {
-            guard let gotoUnion = calcGotoUnion(i: firstStatus, forcusToken: syntax.rhs[syntax.point]) else {
-                return nil
-            }
-            if resultClosureUnion.reduce(true, { (result, arg) -> Bool in
-                return result && !isSameClosureUnion(i1: arg, i2: gotoUnion)
-            }) {
-                resultClosureUnion.append(gotoUnion)
-            }
-        }
-        
-        return resultClosureUnion
-    }
-    
-    /// 同じクロージャ集合？
+    /// 同じクロージャ集合？LR0
     public static func isSameClosureUnion(i1: [LR0Term], i2: [LR0Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
             return result && arg.0.lhs.isEqualAndAllowNilAsSame(to: arg.1.lhs)
@@ -266,7 +219,7 @@ extension SyntaxAnalysisResources {
         }) ?? false
     }
     
-    /// 同じクロージャ集合？
+    /// 同じクロージャ集合？LR1
     public static func isSameClosureUnion(i1: [LR1Term], i2: [LR1Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
             return result && arg.0.lhs ==  arg.1.lhs
@@ -281,7 +234,8 @@ extension SyntaxAnalysisResources {
         var result:[LR0Term] = []
         for element in array {
             if !result.contains(where: {
-                $0.point == element.point && $0.lhs == element.lhs
+                $0.lhs == element.lhs
+                    && $0.point == element.point
                     && isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs) }) {
                 result.append(element)
             }

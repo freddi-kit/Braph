@@ -34,17 +34,6 @@ func main(){
     }
 }
 
-if let a = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs: [TokenConstants.expr], point: 0, core: TokenNode.`$`) {
-    let m = SyntaxAnalysisResources.calcCombinedClosureUnion(in: a)
-    print(m.count)
-    for i in m  {
-        print(i.lhs)
-        print(i.rhs)
-        print(i.core)
-        print()
-    }
-}
-
 main()
 
 
