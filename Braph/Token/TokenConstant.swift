@@ -14,6 +14,7 @@ enum TokenConstants: Int, Token {
     case term
     case factor
     case declaration
+    case assign
     case function
     case arg
     case initializer

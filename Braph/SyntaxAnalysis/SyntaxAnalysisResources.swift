@@ -12,7 +12,8 @@ import Foundation
 
 class SyntaxAnalysisResources {
     
-    // MARK: LR項
+    // MARK: 型
+    typealias GenerateRule = (lhs: TokenConstants, rhs: [Token])
     typealias LR0Term = (lhs: TokenConstants, rhs: [Token], point: Int)
     typealias LR1Term = (lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode])
     
@@ -32,7 +33,7 @@ class SyntaxAnalysisResources {
     
     // MARK: Constants
     
-    public static let definedSyntaxs: [(lhs: TokenConstants, rhs: [Token])] = [
+    public static let definedSyntaxs: [GenerateRule] = [
         // (for extended syntax)
         (lhs: .start, rhs: [TokenConstants.statement]),
 
@@ -40,10 +41,14 @@ class SyntaxAnalysisResources {
         (lhs: .statement, rhs: [TokenConstants.declaration]),
         (lhs: .statement, rhs: [TokenConstants.expr]),
         (lhs: .statement, rhs: [TokenConstants.return]),
+        (lhs: .statement, rhs: [TokenConstants.assign]),
 
         // declaration
         (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
         (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
+        
+        // assign
+        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
         
         // expression
         (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),

@@ -23,7 +23,7 @@ func main(){
             print(lexs)
             
             if let syntaxTree = syntaxAnalysis.analysis(input: lexs) {
-                print(syntaxTree)
+                syntaxTree.print(depth: 0)
             } else {
                 print("syntax Error")
             }
