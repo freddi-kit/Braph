@@ -9,104 +9,84 @@
 import Foundation
 
 class SyntaxAnalysis {
-    private var automatas: [[SyntaxAnalysisResources.LR1Term]] = []
     private var actionSheet: [(input: Token, status: Int, isShift: Bool, isAccept: Bool, goTo: Int)] = []
     
     init() {
-        makeAutomatas()
+        makeAutomatasAndActionSheet()
         for i in actionSheet {
             print(i)
         }
     }
     
-    // MARK: Create Tree
-    
-    private func addRhsToTree(addFrom: SyntaxAnalysisResources.GenerateRule, addTo: inout SyntaxTree){
-        if addTo.tree.count == 0 {
-            addTo.tree = addFrom.rhs
-        } else {
-            for treeIndex in 0..<addTo.tree.count {
-                if var tree = addTo.tree[treeIndex] as? SyntaxTree {
-                    addRhsToTree(addFrom: addFrom, addTo: &tree)
-                }
-                if addTo.tree[treeIndex].isEqualAllowNilAsSame(to: addFrom.lhs) {
-                    addTo.tree[treeIndex] = SyntaxTree.init(addFrom.rhs)
-                }
-            }
-        }
-    }
-    
     // MARK: Public functions
+    
+    /// 構文解析
     public func analysis(input inputTokens:[TokenNode]) -> SyntaxTree? {
         var nowStatusStack: [Int] = [0]
         var inputTokenIndex = 0
         var resultSyntaxs: [SyntaxAnalysisResources.GenerateRule] = []
-        var resultTree: SyntaxTree = .init([])
         
         while inputTokenIndex < inputTokens.count {
             let inputToken = inputTokens[inputTokenIndex]
             guard let nowStatus = nowStatusStack.last else {
-                print("no stack")
                 break
             }
             
-            print("input is" ,inputToken)
-            print("now is" ,nowStatus)
             let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: inputToken) && $0.status == nowStatus }
-            print("action is" ,getFromActionSheet)
-            if let action = getFromActionSheet.first {
-                if action.isAccept == true {
-                    print("accepted!")
-                    for resultSyntax in resultSyntaxs.reversed() {
-                        print(resultSyntax)
-                        addRhsToTree(addFrom: resultSyntax, addTo: &resultTree)
-                    }
-                    return resultTree
-                }
-                if action.isShift {
-                    print("shift")
-                    nowStatusStack.append(action.goTo)
-                    inputTokenIndex += 1
-                    print("shift done")
-                } else {
-                    resultSyntaxs.append(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
-                    for _ in 0..<SyntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
-                        guard let _ = nowStatusStack.popLast() else {
-                            print("cannot pop")
-                            return nil
-                        }
-                    }
-                    guard let nowStatus = nowStatusStack.last else {
-                        print("cannot see last")
-                        return nil
-                    }
-                    let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: SyntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
-                    guard getFromActionSheet.count == 1, let action = getFromActionSheet.first else {
-                        print("there is no action")
-                        return nil
-                    }
-                    nowStatusStack.append(action.goTo)
-                    print("reduce done")
-                }
-            } else {
-                print("there is no action")
+            
+            guard let action = getFromActionSheet.first else {
                 return nil
             }
+            if action.isAccept == true {
+                print("accepted!")
+                let resultTree: SyntaxTree = .init([])
+                for resultSyntax in resultSyntaxs.reversed() {
+                    resultTree.addRhsToTree(addFrom: resultSyntax)
+                }
+                resultTree.setInput(input: inputTokens)
+                return resultTree
+            }
+            if action.isShift {
+                print("shift")
+                nowStatusStack.append(action.goTo)
+                inputTokenIndex += 1
+                print("shift done")
+                
+            } else {
+                print("reduce")
+                resultSyntaxs.append(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
+                for _ in 0..<SyntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
+                    guard nowStatusStack.popLast() != nil else {
+                        print("cannot pop")
+                        return nil
+                    }
+                }
+                guard let nowStatus = nowStatusStack.last else {
+                    break
+                }
+                let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: SyntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
+                guard getFromActionSheet.count == 1, let action = getFromActionSheet.first else {
+                    break
+                }
+                nowStatusStack.append(action.goTo)
+                print("reduce done")
+            }
         }
-        print("reading over")
+        
         return nil
     }
     
-    private func makeAutomatas() {
-        automatas = []
+    /// 状態遷移表等々の作成
+    private func makeAutomatasAndActionSheet() {
+        var automatas: [[SyntaxAnalysisResources.LR1Term]] = []
         actionSheet = []
         
-        guard let firstQ = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
+        guard let firstUnion = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
             print("actionSheet is not generated")
             return
         }
         
-        automatas.append(firstQ)
+        automatas.append(firstUnion)
                 
         var nowStatus = 0
         while nowStatus < automatas.count {
@@ -132,15 +112,15 @@ class SyntaxAnalysis {
                 }
                 
                 if term.point == term.rhs.count {
-                    var count = 0
+                    var processTimes = 0
                     for syntax in SyntaxAnalysisResources.definedSyntaxs {
                         if syntax.lhs == term.lhs && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(term.rhs, syntax.rhs) {
                             break
                         }
-                        count += 1
+                        processTimes += 1
                     }
                     for core in term.core {
-                        actionSheet.append((input: core, status: nowStatus, isShift: false, isAccept: false, goTo: count))
+                        actionSheet.append((input: core, status: nowStatus, isShift: false, isAccept: false, goTo: processTimes))
                     }
                 }
             }
@@ -148,44 +128,16 @@ class SyntaxAnalysis {
                 guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(i: automata, forcusToken: token) else {
                     continue
                 }
-                var count = 0
+                var processTimes = 0
                 for automata in automatas {
                     if SyntaxAnalysisResources.isSameClosureUnion(i1: automata, i2: gotoUnion) {
-                        self.actionSheet.append((input: token, status: nowStatus, isShift: true, isAccept: false, goTo: count))
+                        self.actionSheet.append((input: token, status: nowStatus, isShift: true, isAccept: false, goTo: processTimes))
                     }
-                    count += 1
+                    processTimes += 1
                 }
             }
             nowStatus += 1
         }
         print("actionSheet is generated")
-    }
-}
-
-// 構文木
-class SyntaxTree: Token {
-    
-    // MARK: Initialization
-    
-    init(_ tree: [Token]) {
-        self.tree = tree
-    }
-    
-    // MARK: Public Values
-    
-    public var tree: [Token]
-    
-    public func print(depth: Int){
-        for node in tree {
-            for _ in 0..<depth {
-                Swift.print("○", terminator: "")
-            }
-            if let insideTree = node as? SyntaxTree {
-                Swift.print("tree")
-                insideTree.print(depth: depth + 1)
-            } else {
-                Swift.print(node)
-            }
-        }
     }
 }
