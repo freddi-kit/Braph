@@ -42,9 +42,9 @@ class LexicalAnalysisResources {
         .Intaractive: ("Intaractive", .type),
         .Double : ("Double", .type),
         .String : ("String", .type),
-        .var : ("var", .define),
-        .let : ("let", .define),
-        .func : ("func", .define),
+        .var : ("var", .declaration),
+        .let : ("let", .declaration),
+        .func : ("func", .declaration),
         .return : ("return", .return)
     ]
     

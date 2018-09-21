@@ -13,13 +13,19 @@ enum TokenConstants: Int, Token {
     case expr
     case term
     case factor
-    case define
+    case declaration
     case function
     case arg
+    case initializer
+    case `return`
+    case statement
+    
+    // For Extend Syntax
+    case start
     
     public func isStart() -> Bool {
         switch self {
-        case .expr, .define:
+        case .expr, .declaration:
             return true
         default:
             return false

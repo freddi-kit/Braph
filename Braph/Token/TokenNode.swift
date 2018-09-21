@@ -40,7 +40,7 @@ enum TokenNode: Token {
     // キーワードの特定
     enum KeyWordType {
         case type
-        case define
+        case declaration
         case `return`
     }
     

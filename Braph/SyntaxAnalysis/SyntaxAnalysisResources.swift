@@ -15,13 +15,30 @@ class SyntaxAnalysisResources {
     // MARK: Constants
     
     public static let definedSyntaxs: [(lhs: TokenConstants, rhs: [Token])] = [
-        (lhs: .define, rhs: [TokenNode.keyword(.define, nil), TokenNode.identifier(nil), TokenNode.symbol("="),  TokenConstants.expr]),
+        // (for extended syntax)
+        (lhs: .start, rhs: [TokenConstants.expr]),
+        
+        // statement
+        (lhs: .statement, rhs: [TokenConstants.declaration]),
+        (lhs: .statement, rhs: [TokenConstants.expr]),
+        (lhs: .statement, rhs: [TokenConstants.return]),
+        
+        // declaration
+        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
+        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
+        
+        // expression
         (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
         (lhs: .expr, rhs: [TokenConstants.term]),
         (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
         (lhs: .term, rhs: [TokenConstants.factor]),
         (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
-        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)])
+        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
+        
+        // return
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr])
     ]
     
     // 文法の宣言
@@ -99,16 +116,6 @@ extension SyntaxAnalysisResources {
         return reduceSameElementFromTokenNodeUnion(array: resultTokens)
     }
     
-    private static func isSameTokenNodeArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
-        guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
-            return tokens.0.isEqualAndAllowNilAsSame(to: tokens.1)
-        }) else {
-            return false
-        }
-        return hasSameNode
-    }
-    
-    
     /// Closure集合を求める
     public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int) -> [(lhs: TokenConstants, rhs: [Token], point: Int)]? {
         guard hasDefinedSyntax(lhs: lhs, rhs: rhs), point <= rhs.count else {
@@ -124,7 +131,7 @@ extension SyntaxAnalysisResources {
             let definedSyntax = definedSyntaxs.filter{ $0.lhs == pointingToken }
             for syntax in definedSyntax {
                 if pointingToken == lhs {
-                    if isSameTokenNodeArrayAllowNilAsSame(rhs, syntax.rhs) {
+                    if isSameTokenArrayAllowNilAsSame(rhs, syntax.rhs) {
                         continue
                     }
                 }
@@ -154,6 +161,15 @@ extension SyntaxAnalysisResources {
         
         return resultUnion
     }
+    
+    /// 同じクロージャ集合？
+    public static func isSameClosureUnion(i1: [(lhs: TokenConstants, rhs: [Token], point: Int)], i2: [(lhs: TokenConstants, rhs: [Token], point: Int)]) -> Bool {
+        return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
+            return result && arg.0.lhs.isEqualAndAllowNilAsSame(to: arg.1.lhs)
+                && arg.0.lhs.isEqualAndAllowNilAsSame(to: arg.1.lhs)
+                && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+        }) ?? false
+    }
 
     /// Set使えないための対策１
     private static func reduceSameElementFromTokenSyntaxUnion(array: [(lhs: TokenConstants, rhs: [Token], point: Int)]) -> [(lhs: TokenConstants, rhs: [Token], point: Int)] {
@@ -162,7 +178,7 @@ extension SyntaxAnalysisResources {
             if !result.contains(where: {
                 $0.point == element.point &&
                 $0.lhs == element.lhs &&
-                isSameTokenNodeArrayAllowNilAsSame($0.rhs, element.rhs) }) {
+                isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs) }) {
                 result.append(element)
             }
         }
@@ -194,6 +210,16 @@ extension SyntaxAnalysisResources {
             }
         }
         return false
+    }
+    
+    /// 同じノード配列かどうか？
+    private static func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
+        guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
+            return tokens.0.isEqualAndAllowNilAsSame(to: tokens.1)
+        }) else {
+            return false
+        }
+        return hasSameNode
     }
 }
 
@@ -244,11 +270,9 @@ extension TokenNode {
     }
 }
 
-extension Array where Element == Token {
-    
-}
-
 extension Collection {
+    
+    // こんびーん！
     func combine<C: Collection>(_ collection: C) -> [(Element, Element)]? where C.Element == Element {
         guard collection.count == self.count, let castedSelf = self as? [Element], let collection = collection as? [Element] else {
             return nil
