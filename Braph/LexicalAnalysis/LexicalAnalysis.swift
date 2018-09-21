@@ -60,7 +60,6 @@ class LexicalAnalysis {
             }
             nowIndex += 1
         }
-        
         return resultTokenSequence
     }
 

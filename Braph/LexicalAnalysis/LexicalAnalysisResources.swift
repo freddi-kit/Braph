@@ -24,7 +24,7 @@ class LexicalAnalysisResources {
         ":" : .accept(QForSymbol(), .symbol(":")),
         "," : .accept(QForSymbol(), .symbol(",")),
         "." : .accept(QForSymbol(), .symbol(".")),
-        ";" : .accept(QForSymbol(), .end),
+        ";" : .accept(QForSymbol(), .`$`),
         "{" : .accept(QForSymbol(), .parenthesis("{")),
         "}" : .accept(QForSymbol(), .parenthesis("}")),
         "(" : .accept(QForSymbol(), .parenthesis("(")),
