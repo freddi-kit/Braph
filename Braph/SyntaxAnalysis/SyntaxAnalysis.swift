@@ -97,8 +97,9 @@ class SyntaxAnalysis {
             } else {
                 if demoModeAtSyn {
                     print("reduce")
+                    print(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
                 }
-                print(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
+                
                 resultSyntaxs.append(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
                 for _ in 0..<SyntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
                     guard nowStatusStack.popLast() != nil else {
@@ -131,7 +132,7 @@ class SyntaxAnalysis {
         actionSheet = []
         
         // 初期ノードの作成
-        guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .S, rhs:  [TokenConstants.A], point: 0, core: [TokenNode.`$`]) else {
+        guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
             print("actionSheet is not generated")
             return
         }
@@ -164,7 +165,7 @@ class SyntaxAnalysis {
             
             // 受理状態の追加
             for term in automatas[indexAutomatas] {
-                if term.lhs == .S && term.point == term.rhs.count {
+                if term.lhs == .start && term.point == term.rhs.count {
                     actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
                 } else if term.point == term.rhs.count {
                     // Reduceの追加

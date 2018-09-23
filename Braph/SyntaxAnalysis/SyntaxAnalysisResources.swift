@@ -44,42 +44,43 @@ class SyntaxAnalysisResources {
     /// 定義した生成規則
     public static let definedSyntaxs: [GenerateRule] = [
         // (for debug)
-        (lhs: .S, rhs: [TokenConstants.A]),
-        (lhs: .A, rhs: [TokenConstants.E, TokenNode.symbol("="), TokenConstants.E]),
-        (lhs: .A, rhs: [TokenNode.identifier(nil)]),
-        (lhs: .E, rhs: [TokenConstants.E, TokenNode.operant(.plus, nil), TokenConstants.T]),
-        (lhs: .E, rhs: [TokenConstants.T]),
-        (lhs: .T, rhs: [TokenNode.identifier(nil)]),
-        (lhs: .T, rhs: [TokenNode.literal(nil, nil)]),
+//        (lhs: .S, rhs: [TokenConstants.A]),
+//        (lhs: .A, rhs: [TokenConstants.E, TokenNode.symbol("="), TokenConstants.E]),
+//        (lhs: .A, rhs: [TokenNode.identifier(nil)]),
+//        (lhs: .E, rhs: [TokenConstants.E, TokenNode.operant(.plus, nil), TokenConstants.T]),
+//        (lhs: .E, rhs: [TokenConstants.T]),
+//        (lhs: .T, rhs: [TokenNode.identifier(nil)]),
+//        (lhs: .T, rhs: [TokenNode.literal(nil, nil)]),
+        
         // (for extended syntax)
- //       (lhs: .start, rhs: [TokenConstants.statement]),
-//
-//        // statement
-//        (lhs: .statement, rhs: [TokenConstants.declaration]),
-//        (lhs: .statement, rhs: [TokenConstants.expr]),
-//        (lhs: .statement, rhs: [TokenConstants.return]),
-//        (lhs: .statement, rhs: [TokenConstants.assign]),
-//
-//        // declaration
-//        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
-//        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
-//
-//        // assign
-//        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
-//
-//        // expression
-//        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
-//        (lhs: .expr, rhs: [TokenConstants.term]),
-//        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
-//        (lhs: .term, rhs: [TokenConstants.factor]),
-//        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
-//        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
-//        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
-//
-//        // return
-//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
-//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
-//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
+        (lhs: .start, rhs: [TokenConstants.statement]),
+
+        // statement
+        (lhs: .statement, rhs: [TokenConstants.declaration]),
+        (lhs: .statement, rhs: [TokenConstants.expr]),
+        (lhs: .statement, rhs: [TokenConstants.return]),
+        (lhs: .statement, rhs: [TokenConstants.assign]),
+
+        // declaration
+        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
+        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
+
+        // assign
+        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
+
+        // expression
+        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
+        (lhs: .expr, rhs: [TokenConstants.term]),
+        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
+        (lhs: .term, rhs: [TokenConstants.factor]),
+        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
+        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
+        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
+
+        // return
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
     ]
 }
 

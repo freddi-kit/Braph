@@ -12,7 +12,12 @@ class SemanticsAnalysis {
     
     var shift = 0
     var valueTable:[String: (Int, String)] = [:]
-    var resultCode: String = "define i32 @main() {\n"
+    var resultCode: String {
+        get {
+            return "define i32 @main() {\n"+mainCode+"}"
+        }
+    }
+    private var mainCode: String = ""
     
     public func analysis(input syntaxTree: SyntaxTree) -> [SyntaxTree]? {
         if syntaxTree.head == .statement {
@@ -29,8 +34,8 @@ class SemanticsAnalysis {
                                         let value = calcExpr(tree: node) {
                                             shift += 1
                                             valueTable[name] = (shift, value)
-                                            resultCode += "\t%\(shift) = alloca i32, align 4\n"
-                                            resultCode += "\tstore i32 \(value), i32* %\(shift), align 4\n"
+                                            mainCode += "\t%\(shift) = alloca i32, align 4\n"
+                                            mainCode += "\tstore i32 \(value), i32* %\(shift), align 4\n"
                                         }
                                     }
                                 }
@@ -45,8 +50,8 @@ class SemanticsAnalysis {
                             switch valueNode {
                             case .identifier(let name):
                                 if let name = name, let valueData = valueTable[name]{
-                                    resultCode += "\t%\(shift+1) = load i32, i32* %\(valueData.0), align 4\n"
-                                    resultCode += "\tret i32 %\(shift+1)\n"
+                                    mainCode += "\t%\(shift+1) = load i32, i32* %\(valueData.0), align 4\n"
+                                    mainCode += "\tret i32 %\(shift+1)\n"
                                 }
                                 return nil
                             default: return nil
