@@ -151,7 +151,7 @@ class SyntaxAnalysis {
                 if !gotoUnion.isEmpty
                     // Is not already added?
                     && automatas.reduce(true) { (result, arg) -> Bool in
-                        return result && !SyntaxAnalysisResources.isSameClosureUnion(i1: arg, i2: gotoUnion)
+                        return result && !SyntaxAnalysisResources.isSameClosureUnion(arg, gotoUnion)
                     } {
                     automatas += [gotoUnion]
                 }
@@ -171,7 +171,7 @@ class SyntaxAnalysis {
                     // Reduceの追加
                     let indexSameTerm = SyntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
                         return arg.lhs == term.lhs
-                            && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(arg.rhs, term.rhs)
+                            && SyntaxAnalysisResources.isSameTokenRuleAllowNilAsSame(arg.rhs, term.rhs)
                     }
                     
                     guard let reduceTo = indexSameTerm else {
@@ -193,7 +193,7 @@ class SyntaxAnalysis {
                 // Shift先の追加
                 var shiftTo = 0
                 for automata in automatas {
-                    if SyntaxAnalysisResources.isSameClosureUnion(i1: automata, i2: gotoUnion) {
+                    if SyntaxAnalysisResources.isSameClosureUnion(automata, gotoUnion) {
                         self.actionSheet.append((input: token,
                                                  status: indexAutomatas,
                                                  isShift: true,

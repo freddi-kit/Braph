@@ -211,7 +211,7 @@ extension SyntaxAnalysisResources {
             for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
                 // 全く同じ文法は二度と求めない
                 if pointingToken == lhs
-                    && isSameTokenArrayAllowNilAsSame(rhs, definedMatchLhsSyntax.rhs)
+                    && isSameTokenRuleAllowNilAsSame(rhs, definedMatchLhsSyntax.rhs)
                     && isSameTokenArrayAllowNilAsSame(newCores, core)  {
                     continue
                 }
@@ -234,7 +234,7 @@ extension SyntaxAnalysisResources {
             for indexResult in 0..<resultLR1TermUnion.count {
                 // Core以外が同じな場合、追加
                 if resultLR1TermUnion[indexResult].lhs == union[indexUnion].lhs
-                    && isSameTokenArrayAllowNilAsSame(resultLR1TermUnion[indexResult].rhs, union[indexUnion].rhs)
+                    && isSameTokenRuleAllowNilAsSame(resultLR1TermUnion[indexResult].rhs, union[indexUnion].rhs)
                     && resultLR1TermUnion[indexResult].point == union[indexUnion].point {
                     resultLR1TermUnion[indexResult].core += union[indexUnion].core
                     resultLR1TermUnion[indexResult].core = makeUnion(array: resultLR1TermUnion[indexResult].core)
@@ -271,24 +271,20 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じクロージャ集合？LR0
-    public static func isSameClosureUnion(i1: [LR0Term], i2: [LR0Term]) -> Bool {
+    public static func isSameClosureUnion(_ i1: [LR0Term], _ i2: [LR0Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
             return result && arg.0.lhs.isEqualAllowNilAsSame(to: arg.1.lhs)
-                && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+                && isSameTokenRuleAllowNilAsSame(arg.0.rhs, arg.1.rhs)
                 && arg.0.point == arg.1.point
         }) ?? false
     }
     
     /// 同じクロージャ集合？LR1
-    public static func isSameClosureUnion(i1: [LR1Term], i2: [LR1Term]) -> Bool {
+    public static func isSameClosureUnion(_ i1: [LR1Term], _ i2: [LR1Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
-            if isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
-                && arg.0.point == arg.1.point
-                && isSameTokenArrayAllowNilAsSame(arg.0.core, arg.1.core) {
-            }
             
             return result && arg.0.lhs ==  arg.1.lhs
-                && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+                && isSameTokenRuleAllowNilAsSame(arg.0.rhs, arg.1.rhs)
                 && arg.0.point == arg.1.point
                 && isSameTokenArrayAllowNilAsSame(arg.0.core, arg.1.core)
         }) ?? false
@@ -301,7 +297,7 @@ extension SyntaxAnalysisResources {
             if !result.contains(where: {
                 $0.lhs == element.lhs
                     && $0.point == element.point
-                    && isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs) }) {
+                    && isSameTokenRuleAllowNilAsSame($0.rhs, element.rhs) }) {
                 result.append(element)
             }
         }
@@ -314,7 +310,7 @@ extension SyntaxAnalysisResources {
         for element in union {
             if !result.contains(where: {
                 $0.lhs ==  element.lhs
-                    && isSameTokenArrayAllowNilAsSame($0.rhs, element.rhs)
+                    && isSameTokenRuleAllowNilAsSame($0.rhs, element.rhs)
                     && $0.point == element.point
                     && isSameTokenArrayAllowNilAsSame($0.core, element.core) }) {
                 result.append(element)
@@ -361,6 +357,14 @@ extension SyntaxAnalysisResources {
         return false
     }
     
+    public static func isSameTokenRuleAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
+        guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
+                return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
+        }) else {
+            return false
+        }
+        return hasSameNode
+    }
     /// 同じノード配列かどうか？
     public static func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
         if rhs.count != lhs.count {
