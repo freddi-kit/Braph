@@ -29,7 +29,6 @@ class SyntaxAnalysis {
         var inputTokenIndex = 0
         var resultSyntaxs: [SyntaxAnalysisResources.GenerateRule] = []
         
-        
         while inputTokenIndex < inputTokens.count {
             
             let inputToken = inputTokens[inputTokenIndex]
@@ -55,14 +54,18 @@ class SyntaxAnalysis {
                     print()
                 }
         
-                
                 resultSyntaxs = resultSyntaxs.reversed()
-                let resultIndex = 0
-                let resultTree: SyntaxTree = .init(head: resultSyntaxs[resultIndex].lhs, tree: resultSyntaxs[resultIndex].rhs)
                 
-                for resultIndex in 0..<resultSyntaxs.count {
-                    resultTree.addRhsToTree(addFrom: resultSyntaxs[resultIndex])
+                
+                let indexResultSyntaxs = 0
+                let resultTree: SyntaxTree = .init(head: resultSyntaxs[indexResultSyntaxs].lhs,
+                                                   tree: resultSyntaxs[indexResultSyntaxs].rhs)
+                
+                for indexResultSyntaxs in 0..<resultSyntaxs.count {
+                    resultTree.addRhsToTree(addFrom: resultSyntaxs[indexResultSyntaxs])
                 }
+                
+                
                 resultTree.setInput(input: inputTokens)
                 print(resultTree.printTree())
                 return resultTree
@@ -113,15 +116,37 @@ class SyntaxAnalysis {
         }
         automatas.append(firstNode)
         
-        // 今の参照中のオーマトン
-        // automatasは変わるので、forでのイテレーションは絶対に駄目
-        var nowStatus = 0
-        while nowStatus < automatas.count {
+        // 今の参照中のオーマトンのindex。automatasは変わるので、forでのイテレーションは絶対に駄目
+        var indexAutomatas = 0
+        while indexAutomatas < automatas.count {
             // 文法中に使われているTokenを見る
             for token in SyntaxAnalysisResources.appearedTokenInSyntax {
-                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[nowStatus], forcusToken: token) else {
+                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
                     print("actionSheet is not generated")
                     return
+                }
+                
+                // 受理状態の追加
+                for term in automatas[indexAutomatas] {
+                    if term.lhs == .start && term.point == term.rhs.count {
+                        actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
+                    }
+                    
+                    // Reduceの追加
+                    if term.point == term.rhs.count {
+                        let indexSameTerm = SyntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
+                            return arg.lhs == term.lhs
+                                && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(arg.rhs, term.rhs)
+                        }
+                        
+                        guard let reduceTo = indexSameTerm else {
+                            return
+                        }
+                        
+                        for core in term.core {
+                            actionSheet.append((input: core, status: indexAutomatas, isShift: false, isAccept: false, goTo: Int(reduceTo)))
+                        }
+                    }
                 }
                 
                 if !gotoUnion.isEmpty
@@ -132,41 +157,31 @@ class SyntaxAnalysis {
                     automatas += [gotoUnion]
                 }
             }
-            nowStatus += 1
+            indexAutomatas += 1
         }
         
-        nowStatus = 0
-        for automata in automatas {
-            for term in automata {
-                // 受理行動状態の追加
-                if term.lhs == .start && term.point == term.rhs.count {
-                    actionSheet.append((input: TokenNode.`$`, status: nowStatus, isShift: false, isAccept: true, goTo: -1))
-                } else if term.point == term.rhs.count {
-                    var processTimes = 0
-                    for syntax in SyntaxAnalysisResources.definedSyntaxs {
-                        if syntax.lhs == term.lhs && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(term.rhs, syntax.rhs) {
-                            break
-                        }
-                        processTimes += 1
-                    }
-                    for core in term.core {
-                        actionSheet.append((input: core, status: nowStatus, isShift: false, isAccept: false, goTo: processTimes))
-                    }
-                }
-            }
+        // Shiftの追加
+        indexAutomatas = 0
+        while indexAutomatas < automatas.count {
             for token in SyntaxAnalysisResources.appearedTokenInSyntax {
-                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automata, forcusToken: token) else {
+                // tokenごとの遷移先を見る
+                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
                     continue
                 }
-                var processTimes = 0
+                // Shift先の追加
+                var shiftTo = 0
                 for automata in automatas {
                     if SyntaxAnalysisResources.isSameClosureUnion(i1: automata, i2: gotoUnion) {
-                        self.actionSheet.append((input: token, status: nowStatus, isShift: true, isAccept: false, goTo: processTimes))
+                        self.actionSheet.append((input: token,
+                                                 status: indexAutomatas,
+                                                 isShift: true,
+                                                 isAccept: false,
+                                                 goTo: shiftTo))
                     }
-                    processTimes += 1
+                    shiftTo += 1
                 }
             }
-            nowStatus += 1
+            indexAutomatas += 1
         }
         print("actionSheet is generated")
     }
