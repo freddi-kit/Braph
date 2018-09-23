@@ -19,6 +19,11 @@ class SyntaxAnalysis {
     
     init() {
         makeAutomatasAndActionSheet()
+        if demoModeAtSyn {
+            for action in actionSheet {
+                print(action)
+            }
+        }
     }
     
     // MARK: Public functions
@@ -32,21 +37,31 @@ class SyntaxAnalysis {
         while inputTokenIndex < inputTokens.count {
             
             let inputToken = inputTokens[inputTokenIndex]
+            
+            if demoModeAtSyn {
+                print("input is :", inputTokens[inputTokenIndex])
+            }
+            
             guard let nowStatus = nowStatusStack.last else {
-                break
+                return nil
+            }
+            
+            if demoModeAtSyn {
+                print("status is :", nowStatus)
             }
             
             let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: inputToken) && $0.status == nowStatus }
             
             guard let action = getFromActionSheet.first else {
+                if demoModeAtSyn {
+                    print("No action")
+                }
                 return nil
             }
             
             if demoModeAtSyn {
-                print(action)
-                readLine()
+                print("action is ",action)
             }
-            
             
             if action.isAccept == true {
                 if demoModeAtSyn {
@@ -82,6 +97,7 @@ class SyntaxAnalysis {
                 if demoModeAtSyn {
                     print("reduce")
                 }
+                print(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
                 resultSyntaxs.append(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
                 for _ in 0..<SyntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
                     guard nowStatusStack.popLast() != nil else {
@@ -93,9 +109,13 @@ class SyntaxAnalysis {
                 }
                 let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: SyntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
                 guard getFromActionSheet.count == 1, let action = getFromActionSheet.first else {
+                    print("many status!")
                     break
                 }
                 nowStatusStack.append(action.goTo)
+            }
+            if demoModeAtSyn {
+                readLine()
             }
         }
         
@@ -104,12 +124,14 @@ class SyntaxAnalysis {
     
     /// 状態遷移表の作成
     private func makeAutomatasAndActionSheet() {
-        // オートマトン
+        
         var automatas: [[SyntaxAnalysisResources.LR1Term]] = []
+
+        // オートマトン
         actionSheet = []
         
         // 初期ノードの作成
-        guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
+        guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .S, rhs:  [TokenConstants.A], point: 0, core: [TokenNode.`$`]) else {
             print("actionSheet is not generated")
             return
         }
@@ -142,7 +164,7 @@ class SyntaxAnalysis {
             
             // 受理状態の追加
             for term in automatas[indexAutomatas] {
-                if term.lhs == .start && term.point == term.rhs.count {
+                if term.lhs == .S && term.point == term.rhs.count {
                     actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
                 } else if term.point == term.rhs.count {
                     // Reduceの追加

@@ -20,7 +20,7 @@ extension Token {
         let tokens = (self, to)
         switch tokens {
         case let tokens as (TokenNode, TokenNode):
-            return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
+            return tokens.0.isEqualTokenAllowNilAsSame(to: tokens.1)
         case let tokens as (TokenConstants, TokenConstants):
             return tokens.0 == tokens.1
         default:

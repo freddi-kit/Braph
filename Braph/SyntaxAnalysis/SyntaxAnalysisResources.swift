@@ -43,37 +43,43 @@ class SyntaxAnalysisResources {
     
     /// 定義した生成規則
     public static let definedSyntaxs: [GenerateRule] = [
+        // (for debug)
+        (lhs: .S, rhs: [TokenConstants.A]),
+        (lhs: .A, rhs: [TokenConstants.E, TokenNode.symbol("="), TokenConstants.E]),
+        (lhs: .A, rhs: [TokenNode.identifier(nil)]),
+        (lhs: .E, rhs: [TokenConstants.E, TokenNode.operant(.plus, nil), TokenConstants.T]),
+        (lhs: .E, rhs: [TokenConstants.T]),
+        (lhs: .T, rhs: [TokenNode.identifier(nil)]),
+        (lhs: .T, rhs: [TokenNode.literal(nil, nil)]),
         // (for extended syntax)
-        (lhs: .start, rhs: [TokenConstants.statement]),
-
-        // statement
-        (lhs: .statement, rhs: [TokenConstants.declaration]),
-        (lhs: .statement, rhs: [TokenConstants.expr]),
-        (lhs: .statement, rhs: [TokenConstants.return]),
-        (lhs: .statement, rhs: [TokenConstants.assign]),
-
-        // declaration
-        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
-        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
-        
-        // assign
-        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
-        
-        // expression
-        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
-        (lhs: .expr, rhs: [TokenConstants.term]),
-        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
-        (lhs: .term, rhs: [TokenConstants.factor]),
-        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.exprRestart, TokenNode.parenthesis(")")]),
-        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
-        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
-        
-        (lhs: .exprRestart, rhs: [TokenConstants.expr]),
-        
-        // return
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
+ //       (lhs: .start, rhs: [TokenConstants.statement]),
+//
+//        // statement
+//        (lhs: .statement, rhs: [TokenConstants.declaration]),
+//        (lhs: .statement, rhs: [TokenConstants.expr]),
+//        (lhs: .statement, rhs: [TokenConstants.return]),
+//        (lhs: .statement, rhs: [TokenConstants.assign]),
+//
+//        // declaration
+//        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
+//        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
+//
+//        // assign
+//        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
+//
+//        // expression
+//        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
+//        (lhs: .expr, rhs: [TokenConstants.term]),
+//        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
+//        (lhs: .term, rhs: [TokenConstants.factor]),
+//        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
+//        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
+//        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
+//
+//        // return
+//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
+//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
+//        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
     ]
 }
 
@@ -125,13 +131,12 @@ extension SyntaxAnalysisResources {
     public static func calcFirstUnionFromTokenArray(tokenArray: [Token]) -> [TokenNode] {
         var resultTokensNodes:[TokenNode] = []
         if tokenArray.count > 0 {
+            resultTokensNodes += calcFirstUnion(token: tokenArray[0])
             if isTokenHaveNullRule(token: tokenArray[0]) {
                 let tokenArrayPrefix = Array(tokenArray[1..<tokenArray.count])
                 if !tokenArrayPrefix.isEmpty {
                     resultTokensNodes += calcFirstUnionFromTokenArray(tokenArray: tokenArrayPrefix)
                 }
-            } else {
-                resultTokensNodes += calcFirstUnion(token: tokenArray[0])
             }
         }
         return resultTokensNodes
@@ -190,7 +195,7 @@ extension SyntaxAnalysisResources {
         }
         
         // 新しいCoreを求める
-        var newCores:[TokenNode] = []
+        var newCores: [TokenNode] = []
         if point + 1 < rhs.count {
             var tokenNodesForCheckFirstUnion:[Token] = [rhs[point + 1]]
             tokenNodesForCheckFirstUnion += (core as [Token])
@@ -203,8 +208,10 @@ extension SyntaxAnalysisResources {
         if let pointingToken = rhs[point] as? TokenConstants {
             let definedMatchLhsSyntaxs = definedSyntaxs.filter{ $0.lhs == pointingToken }
             for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
-                // 全く同じ文法は二度とも求めない
-                if pointingToken == lhs && isSameTokenArrayAllowNilAsSame(rhs, definedMatchLhsSyntax.rhs) && isSameTokenArrayAllowNilAsSame(newCores, core)  {
+                // 全く同じ文法は二度と求めない
+                if pointingToken == lhs
+                    && isSameTokenArrayAllowNilAsSame(rhs, definedMatchLhsSyntax.rhs)
+                    && isSameTokenArrayAllowNilAsSame(newCores, core)  {
                     continue
                 }
                 
@@ -274,6 +281,11 @@ extension SyntaxAnalysisResources {
     /// 同じクロージャ集合？LR1
     public static func isSameClosureUnion(i1: [LR1Term], i2: [LR1Term]) -> Bool {
         return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
+            if isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
+                && arg.0.point == arg.1.point
+                && isSameTokenArrayAllowNilAsSame(arg.0.core, arg.1.core) {
+            }
+            
             return result && arg.0.lhs ==  arg.1.lhs
                 && isSameTokenArrayAllowNilAsSame(arg.0.rhs, arg.1.rhs)
                 && arg.0.point == arg.1.point
@@ -325,7 +337,7 @@ extension SyntaxAnalysisResources {
     private static func makeUnion(array: [TokenNode]) -> [TokenNode] {
         var result:[TokenNode] = []
         for element in array {
-            if !result.contains(where: { element.isEqualAllowNilAsSame(to: $0) }) {
+            if !result.contains(where: { element.isEqualTokenAllowNilAsSame(to: $0) }) {
                 result.append(element)
             }
         }
@@ -350,12 +362,22 @@ extension SyntaxAnalysisResources {
     
     /// 同じノード配列かどうか？
     public static func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
-        guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
-            return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
-        }) else {
+        if rhs.count != lhs.count {
             return false
         }
-        return hasSameNode
+
+        var lhsIndexStack: [Int] = []
+        for rhsToken in rhs {
+            for lhsIndex in 0..<lhs.count {
+                if lhsIndexStack.contains(lhsIndex) {
+                    continue
+                }
+                if lhs[lhsIndex].isEqualAllowNilAsSame(to: rhsToken)  {
+                    lhsIndexStack.append(lhsIndex)
+                }
+            }
+        }
+        return lhsIndexStack.count == lhs.count
     }
 }
 
@@ -371,7 +393,7 @@ extension TokenNode {
         return lhs == rhs
     }
     
-    public func isEqualAllowNilAsSame(to rhs: TokenNode) -> Bool {
+    public func isEqualTokenAllowNilAsSame(to rhs: TokenNode) -> Bool {
         
         switch (self, rhs) {
         case (.keyword(let ll, let lr), .keyword(let rl, let rr)):
