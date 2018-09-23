@@ -30,7 +30,9 @@ class LexicalAnalysis {
         
         while nowIndex < stringForAnalysis.count {
             let subStringForAnalysis:[Character] = Array(stringForAnalysis)[startIndex...nowIndex].map { $0 }
+            
             let status = automataChecker(nowQ, subStringForAnalysis)
+            
     
             switch status {
             case .undefined:
@@ -58,6 +60,12 @@ class LexicalAnalysis {
             default:
                 break;
             }
+            if demoModeAtLex {
+                print(status)
+                print(subStringForAnalysis)
+                readLine()
+            }
+            
             nowIndex += 1
         }
         return resultTokenSequence

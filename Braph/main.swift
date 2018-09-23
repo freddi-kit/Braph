@@ -8,38 +8,50 @@
 
 import Foundation
 
+let demoModeAtLex = false
+let demoModeAtSyn = false
+let demoModeAtSem = true
+
 
 func main(){
     let lexicalAnalysis = LexicalAnalysis()
     let syntaxAnalysis = SyntaxAnalysis()
     let semanticsAnalysis = SemanticsAnalysis()
     
-    var syntaxResults: [SyntaxTree] = []
-    
     while true {
         // Input from command line
         print(": >>", terminator: " ")
         
         // Lexical Analysis
-        if let inputFromInterprit = readLine(),
-            let lexs = lexicalAnalysis.analysis(input: inputFromInterprit) {
-            guard inputFromInterprit != "" else {
-                break
-            }
+        guard let inputFromInterprit = readLine() else {
+            print("\nInput End!")
+            break
+        }
+        
+        guard let lexs = lexicalAnalysis.analysis(input: inputFromInterprit) else {
+            print("Lexical Error!")
+            continue
+        }
+        if demoModeAtLex {
+            print(lexs)
+        }
+        
+        guard let syntaxTree = syntaxAnalysis.analysis(input: lexs) else {
+            print("Syntax Error!")
+            continue
+        }
+        if demoModeAtSyn {
+            syntaxTree.printTree()
+        }
             
-            if let syntaxTree = syntaxAnalysis.analysis(input: lexs) {
-                syntaxTree.printTree()
-                syntaxResults.append(syntaxTree)
-            } else {
-                print("syntax Error")
-            }
-            
-        } else {
-            print("lexical Error")
+        guard let absoluteSyntaxTree = semanticsAnalysis.analysis(input: syntaxTree) else {
+            print("Semantics Error")
+            continue
         }
     }
-    
-    semanticsAnalysis.analysis(input: syntaxResults)
+    if demoModeAtSem {
+        print(semanticsAnalysis.resultCode + "}")
+    }
 }
 
 main()

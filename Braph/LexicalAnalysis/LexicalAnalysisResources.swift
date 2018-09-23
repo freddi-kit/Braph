@@ -35,7 +35,7 @@ class LexicalAnalysisResources {
         "/" : .accept(QForSymbol(), .operant(.time, "/"))
     ]
     
-    static public let notAcceptableCharsAsIndet: [Character] = Array(" :;,.{}()=+-:\'\"")
+    static public let notAcceptableCharsAsIndet: [Character] = Array(" *+-/:;,.{}()=+-:\'\"")
     
     static public let detectingKeyWord: [QKeyWord.DetectingToken: (string: String, token: TokenNode.KeyWordType)] = [
         .Int : ("Int", .type),

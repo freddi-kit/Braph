@@ -21,15 +21,6 @@ enum TokenConstants: Int, Token {
     case `return`
     case statement
     
-    // For Extend Syntax
+    // Extend Syntax For LR(1) analysis.
     case start
-    
-    public func isStart() -> Bool {
-        switch self {
-        case .expr, .declaration:
-            return true
-        default:
-            return false
-        }
-    }
 }

@@ -23,22 +23,28 @@ class SyntaxTree: Token {
     public var tree: [Token]
     public var head: TokenConstants
     
-    private func showRoute(depth: Int) {
+    private func showDepthTabSpace(depth: Int) {
         if depth != 0 {
             for _ in 0..<depth {
                 print(" ", terminator: "")
             }
         }
     }
+
     /// 木構造表示
-    public func printTree(depth: Int = 0){
-        showRoute(depth: depth)
+    public func printTree(){
+        inlinePrintTree()
+    }
+    
+    /// 木構造表示(中での処理)
+    private func inlinePrintTree(depth: Int = 0) {
+        showDepthTabSpace(depth: depth)
         print(self.head)
         for node in tree {
             if let insideTree = node as? SyntaxTree {
-                insideTree.printTree(depth: depth + 1)
+                insideTree.inlinePrintTree(depth: depth + 1)
             } else {
-                showRoute(depth: depth+1)
+                showDepthTabSpace(depth: depth+1)
                 print(node)
             }
         }
@@ -60,7 +66,8 @@ class SyntaxTree: Token {
         }
     }
     
-    // TokenNodeに具体的な値を入れる
+    /// TokenNodeに具体的な値を入れる
+    /// TODO: 流石にひどいので改善
     private static var insideIndex = 0
     public func setInput(input: [TokenNode]){
         for index in 0..<tree.count {
@@ -77,5 +84,6 @@ class SyntaxTree: Token {
             }
         }
     }
+    
 }
 
