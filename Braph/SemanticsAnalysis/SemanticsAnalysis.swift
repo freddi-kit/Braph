@@ -14,7 +14,7 @@ class SemanticsAnalysis {
     var valueTable:[String: (Int, String)] = [:]
     var resultCode: String = "define i32 @main() {\n"
     
-    public func analysis(input syntaxTree: SyntaxTree) -> [String]? {
+    public func analysis(input syntaxTree: SyntaxTree) -> [SyntaxTree]? {
         if syntaxTree.head == .statement {
             for node in syntaxTree.tree {
                 if let nodeTree = node as? SyntaxTree {
@@ -31,7 +31,6 @@ class SemanticsAnalysis {
                                             valueTable[name] = (shift, value)
                                             resultCode += "\t%\(shift) = alloca i32, align 4\n"
                                             resultCode += "\tstore i32 \(value), i32* %\(shift), align 4\n"
-
                                         }
                                     }
                                 }

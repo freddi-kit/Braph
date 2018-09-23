@@ -65,9 +65,8 @@ class SyntaxAnalysis {
                     resultTree.addRhsToTree(addFrom: resultSyntaxs[indexResultSyntaxs])
                 }
                 
-                
                 resultTree.setInput(input: inputTokens)
-                print(resultTree.printTree())
+                
                 return resultTree
             }
             if action.isShift {

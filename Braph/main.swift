@@ -10,7 +10,7 @@ import Foundation
 
 let demoModeAtLex = false
 let demoModeAtSyn = false
-let demoModeAtSem = true
+let demoModeAtSem = false
 
 
 func main(){
@@ -45,13 +45,10 @@ func main(){
         }
             
         guard let absoluteSyntaxTree = semanticsAnalysis.analysis(input: syntaxTree) else {
-            print("Semantics Error")
             continue
         }
     }
-    if demoModeAtSem {
-        print(semanticsAnalysis.resultCode + "}")
-    }
+    print(semanticsAnalysis.resultCode + "}")
 }
 
 main()
