@@ -64,15 +64,16 @@ class SyntaxAnalysisResources {
         (lhs: .expr, rhs: [TokenConstants.term]),
         (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
         (lhs: .term, rhs: [TokenConstants.factor]),
-        /// うまくいかないっぽい、これ
-        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
+        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.exprRestart, TokenNode.parenthesis(")")]),
         (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
         (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
+        
+        (lhs: .exprRestart, rhs: [TokenConstants.expr]),
         
         // return
         (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
         (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr])
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
     ]
 }
 

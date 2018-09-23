@@ -11,6 +11,7 @@ import Foundation
 // いわゆる非終端記号
 enum TokenConstants: Int, Token {
     case expr
+    case exprRestart
     case term
     case factor
     case declaration
