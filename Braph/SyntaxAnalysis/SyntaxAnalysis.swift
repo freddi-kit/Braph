@@ -20,6 +20,7 @@ class SyntaxAnalysis {
     init() {
         makeAutomatasAndActionSheet()
         if demoModeAtSyn {
+            print("action count: ", actionSheet.count)
             for action in actionSheet {
                 print(action)
             }
@@ -109,7 +110,6 @@ class SyntaxAnalysis {
                 }
                 let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: SyntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
                 guard getFromActionSheet.count == 1, let action = getFromActionSheet.first else {
-                    print("many status!")
                     break
                 }
                 nowStatusStack.append(action.goTo)
