@@ -126,29 +126,6 @@ class SyntaxAnalysis {
                     return
                 }
                 
-                // 受理状態の追加
-                for term in automatas[indexAutomatas] {
-                    if term.lhs == .start && term.point == term.rhs.count {
-                        actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
-                    }
-                    
-                    // Reduceの追加
-                    if term.point == term.rhs.count {
-                        let indexSameTerm = SyntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
-                            return arg.lhs == term.lhs
-                                && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(arg.rhs, term.rhs)
-                        }
-                        
-                        guard let reduceTo = indexSameTerm else {
-                            return
-                        }
-                        
-                        for core in term.core {
-                            actionSheet.append((input: core, status: indexAutomatas, isShift: false, isAccept: false, goTo: Int(reduceTo)))
-                        }
-                    }
-                }
-                
                 if !gotoUnion.isEmpty
                     // Is not already added?
                     && automatas.reduce(true) { (result, arg) -> Bool in
@@ -163,6 +140,29 @@ class SyntaxAnalysis {
         // Shiftの追加
         indexAutomatas = 0
         while indexAutomatas < automatas.count {
+            
+            // 受理状態の追加
+            for term in automatas[indexAutomatas] {
+                if term.lhs == .start && term.point == term.rhs.count {
+                    actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
+                } else if term.point == term.rhs.count {
+                    // Reduceの追加
+                    let indexSameTerm = SyntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
+                        return arg.lhs == term.lhs
+                            && SyntaxAnalysisResources.isSameTokenArrayAllowNilAsSame(arg.rhs, term.rhs)
+                    }
+                    
+                    guard let reduceTo = indexSameTerm else {
+                        print("actionSheet is not generated")
+                        return
+                    }
+                    
+                    for core in term.core {
+                        actionSheet.append((input: core, status: indexAutomatas, isShift: false, isAccept: false, goTo: Int(reduceTo)))
+                    }
+                }
+            }
+            
             for token in SyntaxAnalysisResources.appearedTokenInSyntax {
                 // tokenごとの遷移先を見る
                 guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
