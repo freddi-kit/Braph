@@ -43,7 +43,7 @@ class SyntaxAnalysisResources {
     
     /// 定義した生成規則
     public static let definedSyntaxs: [GenerateRule] = [
-        // (for debug)
+//        // (for debug)
 //        (lhs: .S, rhs: [TokenConstants.A]),
 //        (lhs: .A, rhs: [TokenConstants.E, TokenNode.symbol("="), TokenConstants.E]),
 //        (lhs: .A, rhs: [TokenNode.identifier(nil)]),

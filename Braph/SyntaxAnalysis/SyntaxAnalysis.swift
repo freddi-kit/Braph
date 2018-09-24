@@ -18,7 +18,7 @@ class SyntaxAnalysis {
     // MARK: Initializer
     
     init() {
-        makeAutomatasAndActionSheet()
+        makeActionSheet()
         if demoModeAtSyn {
             print("action count: ", actionSheet.count)
             for action in actionSheet {
@@ -123,18 +123,16 @@ class SyntaxAnalysis {
         return nil
     }
     
-    /// 状態遷移表の作成
-    private func makeAutomatasAndActionSheet() {
-        
+    private func makeAutomata() -> [[SyntaxAnalysisResources.LR1Term]]? {
         var automatas: [[SyntaxAnalysisResources.LR1Term]] = []
-
+        
         // オートマトン
         actionSheet = []
         
         // 初期ノードの作成
         guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
-            print("actionSheet is not generated")
-            return
+            print("automata is not generated")
+            return nil
         }
         automatas.append(firstNode)
         
@@ -144,8 +142,8 @@ class SyntaxAnalysis {
             // 文法中に使われているTokenを見る
             for token in SyntaxAnalysisResources.appearedTokenInSyntax {
                 guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
-                    print("actionSheet is not generated")
-                    return
+                    print("automata is not generated")
+                    return nil
                 }
                 
                 if !gotoUnion.isEmpty
@@ -159,8 +157,21 @@ class SyntaxAnalysis {
             indexAutomatas += 1
         }
         
-        // Shiftの追加
-        indexAutomatas = 0
+        if demoModeAtSyn {
+            print("automata count: ", automatas.count)
+        }
+        
+        return automatas
+    }
+    
+    /// 状態遷移表の作成
+    private func makeActionSheet() {
+        guard let automatas = makeAutomata() else {
+            print("actionSheet is not generated")
+            return
+        }
+        
+        var indexAutomatas = 0
         while indexAutomatas < automatas.count {
             
             // 受理状態の追加
@@ -185,6 +196,7 @@ class SyntaxAnalysis {
                 }
             }
             
+            // Shiftの追加
             for token in SyntaxAnalysisResources.appearedTokenInSyntax {
                 // tokenごとの遷移先を見る
                 guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
