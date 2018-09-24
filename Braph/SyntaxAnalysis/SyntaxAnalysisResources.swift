@@ -90,7 +90,7 @@ extension SyntaxAnalysisResources {
     
     
     /// Null遷移のある規則であるかどうか求める
-    public static func isTokenHaveNullRule(token: Token, start: TokenConstants? = nil) -> Bool {
+    public static func isTokenHaveNullRule(token: Token, startToken: Token? = nil) -> Bool {
         
         var result = false
         
@@ -101,11 +101,11 @@ extension SyntaxAnalysisResources {
             for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
                 if definedMatchLhsSyntax.rhs.isEmpty {
                     return true
-                } else if definedMatchLhsSyntax.rhs.count == 1,
-                    let start = start,
-                    !definedMatchLhsSyntax.rhs[0].isEqualAllowNilAsSame(to: start) {
-                    result = result || isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0],
-                                                           start: start)
+                } else if definedMatchLhsSyntax.rhs.count == 1
+                    && ((startToken == nil)
+                        || (!definedMatchLhsSyntax.rhs[0].isEqualAllowNilAsSame(to: startToken!))
+                    ) {
+                    result = result || isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0], startToken: startToken)
                 }
             }
         }
@@ -121,9 +121,17 @@ extension SyntaxAnalysisResources {
             // 生成規則の中で、左辺が合う規則を検索
             let definedMatchLhsSyntaxs = definedSyntaxs.filter{ $0.lhs == token }
             for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
-                if let rightTokenFirst = definedMatchLhsSyntax.rhs.first as? TokenConstants,
-                    rightTokenFirst != token {
-                    resultTokenNodes += calcFirstUnionFromTokenArray(tokenArray: definedMatchLhsSyntax.rhs)
+                if let rightTokenFirst = definedMatchLhsSyntax.rhs.first as? TokenConstants {
+                    // 無限ループ防止・rhsの先頭と調べたいTokenが同じの場合
+                    if rightTokenFirst != token {
+                        resultTokenNodes += calcFirstUnionFromTokenArray(tokenArray: definedMatchLhsSyntax.rhs)
+                    }
+                    // もし、先頭がNull遷移を行う可能性があるときも考慮
+                    else if isTokenHaveNullRule(token: rightTokenFirst) &&
+                        !definedMatchLhsSyntax.rhs[1..<definedMatchLhsSyntax.rhs.count].isEmpty {
+                        // rhsの先頭以外でチェック
+                        resultTokenNodes += calcFirstUnionFromTokenArray(tokenArray: Array(definedMatchLhsSyntax.rhs[1..<definedMatchLhsSyntax.rhs.count]))
+                    }
                 } else if let rightToken = definedMatchLhsSyntax.rhs.first as? TokenNode  {
                     resultTokenNodes += [rightToken]
                 }
