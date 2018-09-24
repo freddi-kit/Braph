@@ -228,7 +228,9 @@ extension SyntaxAnalysisResources {
     
     /// Closure集合中のかぶりを消す
     public static func calcCombinedClosureUnion(union: [LR1Term]) -> [LR1Term] {
+        
         var resultLR1TermUnion:[LR1Term] = []
+        
         var isCoreAppended = false
         for indexUnion in 0..<union.count {
             for indexResult in 0..<resultLR1TermUnion.count {
@@ -271,23 +273,50 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じクロージャ集合？LR0
-    public static func isSameClosureUnion(_ i1: [LR0Term], _ i2: [LR0Term]) -> Bool {
-        return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
-            return result && arg.0.lhs.isEqualAllowNilAsSame(to: arg.1.lhs)
-                && isSameTokenRuleAllowNilAsSame(arg.0.rhs, arg.1.rhs)
-                && arg.0.point == arg.1.point
-        }) ?? false
+    public static func isSameClosureUnion(_ lhs: [LR0Term], _ rhs: [LR0Term]) -> Bool {
+        
+        if rhs.count != lhs.count {
+            return false
+        }
+        
+        var lhsIndexStack: [Int] = []
+        for rhsTerm in rhs {
+            for lhsIndex in 0..<lhs.count {
+                if lhsIndexStack.contains(lhsIndex) {
+                    continue
+                }
+                if lhs[lhsIndex].lhs == rhsTerm.lhs
+                    && isSameTokenRuleAllowNilAsSame(lhs[lhsIndex].rhs, rhsTerm.rhs)
+                    && lhs[lhsIndex].point == rhsTerm.point {
+                    lhsIndexStack.append(lhsIndex)
+                }
+            }
+        }
+        return lhsIndexStack.count == lhs.count
     }
     
     /// 同じクロージャ集合？LR1
-    public static func isSameClosureUnion(_ i1: [LR1Term], _ i2: [LR1Term]) -> Bool {
-        return i1.combine(i2)?.reduce(true, { (result, arg) -> Bool in
-            
-            return result && arg.0.lhs ==  arg.1.lhs
-                && isSameTokenRuleAllowNilAsSame(arg.0.rhs, arg.1.rhs)
-                && arg.0.point == arg.1.point
-                && isSameTokenArrayAllowNilAsSame(arg.0.core, arg.1.core)
-        }) ?? false
+    public static func isSameClosureUnion(_ lhs: [LR1Term], _ rhs: [LR1Term]) -> Bool {
+        
+        if rhs.count != lhs.count {
+            return false
+        }
+        
+        var lhsIndexStack: [Int] = []
+        for rhsTerm in rhs {
+            for lhsIndex in 0..<lhs.count {
+                if lhsIndexStack.contains(lhsIndex) {
+                    continue
+                }
+                if lhs[lhsIndex].lhs == rhsTerm.lhs
+                    && isSameTokenRuleAllowNilAsSame(lhs[lhsIndex].rhs, rhsTerm.rhs)
+                    && lhs[lhsIndex].point == rhsTerm.point
+                    && isSameTokenArrayAllowNilAsSame(lhs[lhsIndex].core, rhsTerm.core){
+                    lhsIndexStack.append(lhsIndex)
+                }
+            }
+        }
+        return lhsIndexStack.count == lhs.count
     }
 
     /// 同じToken列を削除する(LR0)
@@ -357,6 +386,7 @@ extension SyntaxAnalysisResources {
         return false
     }
     
+    /// 同じノード配列（順番も考慮）か？
     public static func isSameTokenRuleAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
         guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
                 return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
@@ -365,6 +395,7 @@ extension SyntaxAnalysisResources {
         }
         return hasSameNode
     }
+    
     /// 同じノード配列かどうか？
     public static func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
         if rhs.count != lhs.count {

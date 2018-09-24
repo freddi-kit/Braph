@@ -48,7 +48,7 @@ func main(){
             continue
         }
     }
-    print(semanticsAnalysis.resultCode + "}")
+    print(semanticsAnalysis.resultCode)
 }
 
 main()
