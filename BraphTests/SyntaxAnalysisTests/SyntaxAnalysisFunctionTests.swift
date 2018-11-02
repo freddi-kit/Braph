@@ -8,6 +8,7 @@
 
 import XCTest
 
+// https://www.slideshare.net/ichikaz3/lr-parsing
 class SyntaxAnalysisFunctionTests: XCTestCase {
     
     private let syntaxResources = SyntaxAnalysisResources(definedSyntaxs: [
@@ -24,6 +25,7 @@ class SyntaxAnalysisFunctionTests: XCTestCase {
     )
     
     func testCalcGotoUnion() {
+        
     }
     
 
