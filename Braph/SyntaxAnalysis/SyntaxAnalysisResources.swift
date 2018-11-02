@@ -72,7 +72,7 @@ extension SyntaxAnalysisResources {
                     && ((startToken == nil)
                         || (!definedMatchLhsSyntax.rhs[0].isEqualAllowNilAsSame(to: startToken!))
                     ) {
-                    result = result && isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0], startToken: startToken)
+                    result = result || isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0], startToken: startToken)
                 }
             }
             return result
@@ -304,7 +304,7 @@ extension SyntaxAnalysisResources {
     }
 
     /// 同じToken列を削除する(LR0)
-    private func makeUnion(array: [LR0Term]) -> [LR0Term] {
+    public func makeUnion(array: [LR0Term]) -> [LR0Term] {
         var result:[LR0Term] = []
         for element in array {
             if !result.contains(where: {
@@ -318,7 +318,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(LR1)
-    private func makeUnion(union: [LR1Term]) -> [LR1Term] {
+    public func makeUnion(union: [LR1Term]) -> [LR1Term] {
         var result:[LR1Term] = []
         for element in union {
             if !result.contains(where: {
@@ -333,7 +333,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(Token)
-    private func makeUnion(array: [Token]) -> [Token] {
+    public func makeUnion(array: [Token]) -> [Token] {
         var result:[Token] = []
         for element in array {
             if !result.contains(where: { element.isEqualAllowNilAsSame(to: $0) }) {
@@ -344,7 +344,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(TokenNode)
-    private func makeUnion(array: [TokenNode]) -> [TokenNode] {
+    public func makeUnion(array: [TokenNode]) -> [TokenNode] {
         var result:[TokenNode] = []
         for element in array {
             if !result.contains(where: { element.isEqualTokenAllowNilAsSame(to: $0) }) {
@@ -355,7 +355,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// Closureで不正な文法渡すの防止
-    private func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
+    public func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
         let definedRhs = definedSyntaxs.filter{ $0.lhs == lhs }
         
         for syntax in definedRhs {

@@ -21,12 +21,14 @@ enum TokenConstants: Int, Token {
     case `return`
     case statement
     
-    // for debug
+    // Extend Syntax For LR(1) analysis.
+    case start
+    
+    // Test
     case S
     case A
     case E
     case T
-    
-    // Extend Syntax For LR(1) analysis.
-    case start
+    case U
+    case V
 }
