@@ -51,7 +51,7 @@ class SyntaxTree: Token {
     }
     
     /// 解析の結果を木構造に打ち込む
-    public func addRhsToTree(addFrom: SyntaxAnalysisResources.GenerateRule) {
+    public func addRhsToTree(addFrom: GenerateRule) {
         if tree.count == 0 {
             tree = addFrom.rhs
         } else {

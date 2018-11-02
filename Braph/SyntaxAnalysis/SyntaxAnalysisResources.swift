@@ -8,6 +8,8 @@
 
 import Foundation
 
+typealias GenerateRule = (lhs: TokenConstants, rhs: [Token])
+
 // TODO: 自動生成スクリプトの作成
 
 /// ~AllowNilAsSame系統は、比較時の右辺左辺どちらかにnilがあるなら
@@ -17,71 +19,34 @@ import Foundation
 class SyntaxAnalysisResources {
     
     // MARK: Nested Types
-    
-    /// 生成規則
-    typealias GenerateRule = (lhs: TokenConstants, rhs: [Token])
-    
+
     /// LR(n)項
     typealias LR0Term = (lhs: TokenConstants, rhs: [Token], point: Int)
     typealias LR1Term = (lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode])
     
+    // MARL: Stored Properties
+    
+    /// 定義した生成規則
+    public let definedSyntaxs: [GenerateRule]
+    
+    // MARK: Initalizers
+    init(definedSyntaxs: [GenerateRule]) {
+        self.definedSyntaxs = definedSyntaxs
+    }
+    
     // MARL: Computed Properties
     
     /// 文法中に出てくるTokenの列挙
-    public static var appearedTokenInSyntax: [Token] {
+    public var appearedTokenInSyntax: [Token] {
         get {
             var resultTokens: [Token] = []
             for syntax in definedSyntaxs {
                 resultTokens += [syntax.lhs]
                 resultTokens += syntax.rhs
             }
-            return SyntaxAnalysisResources.makeUnion(array: resultTokens)
+            return makeUnion(array: resultTokens)
         }
     }
-    
-    // MARK: Constants
-    
-    /// 定義した生成規則
-    public static let definedSyntaxs: [GenerateRule] = [
-//        // (for debug)
-//        (lhs: .S, rhs: [TokenConstants.A]),
-//        (lhs: .A, rhs: [TokenConstants.E, TokenNode.symbol("="), TokenConstants.E]),
-//        (lhs: .A, rhs: [TokenNode.identifier(nil)]),
-//        (lhs: .E, rhs: [TokenConstants.E, TokenNode.operant(.plus, nil), TokenConstants.T]),
-//        (lhs: .E, rhs: [TokenConstants.T]),
-//        (lhs: .T, rhs: [TokenNode.identifier(nil)]),
-//        (lhs: .T, rhs: [TokenNode.literal(nil, nil)]),
-        
-        // (for extended syntax)
-        (lhs: .start, rhs: [TokenConstants.statement]),
-
-        // statement
-        (lhs: .statement, rhs: [TokenConstants.declaration]),
-        (lhs: .statement, rhs: [TokenConstants.expr]),
-        (lhs: .statement, rhs: [TokenConstants.return]),
-        (lhs: .statement, rhs: [TokenConstants.assign]),
-
-        // declaration
-        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
-        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
-
-        // assign
-        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
-
-        // expression
-        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
-        (lhs: .expr, rhs: [TokenConstants.term]),
-        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
-        (lhs: .term, rhs: [TokenConstants.factor]),
-        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
-        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
-        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
-
-        // return
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
-        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
-    ]
 }
 
 extension SyntaxAnalysisResources {
@@ -89,31 +54,34 @@ extension SyntaxAnalysisResources {
     // MARK: Functions
     
     
-    /// Null遷移のある規則であるかどうか求める
-    public static func isTokenHaveNullRule(token: Token, startToken: Token? = nil) -> Bool {
+    /// Null遷移のあるTokenであるかどうか求める
+    public func isTokenHaveNullRule(token: Token, startToken: Token? = nil) -> Bool {
         
-        var result = false
-        
+        // もし終端記号のときは強制的にfalse、非終端の場合は遷移先を見る
         if token is TokenNode {
-            result = false
+            return false
         } else if let token = token as? TokenConstants {
+            var result = false
+            // 遷移先をすべて洗い出し
             let definedMatchLhsSyntaxs = definedSyntaxs.filter{ $0.lhs == token }
             for definedMatchLhsSyntax in definedMatchLhsSyntaxs {
                 if definedMatchLhsSyntax.rhs.isEmpty {
                     return true
-                } else if definedMatchLhsSyntax.rhs.count == 1
+                }
+                if definedMatchLhsSyntax.rhs.count == 1
                     && ((startToken == nil)
                         || (!definedMatchLhsSyntax.rhs[0].isEqualAllowNilAsSame(to: startToken!))
                     ) {
-                    result = result || isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0], startToken: startToken)
+                    result = result && isTokenHaveNullRule(token: definedMatchLhsSyntax.rhs[0], startToken: startToken)
                 }
             }
+            return result
         }
-        return result
+        return false
     }
     
     /// First集合を求める
-    public static func calcFirstUnion(token: Token) -> [TokenNode] {
+    public func calcFirstUnion(token: Token) -> [TokenNode] {
         var resultTokenNodes: [TokenNode] = []
         
         // 終端記号の場合
@@ -145,7 +113,7 @@ extension SyntaxAnalysisResources {
     }
     
     // Tokenの配列のFirst集合を求める
-    public static func calcFirstUnionFromTokenArray(tokenArray: [Token]) -> [TokenNode] {
+    public func calcFirstUnionFromTokenArray(tokenArray: [Token]) -> [TokenNode] {
         var resultTokensNodes:[TokenNode] = []
         if tokenArray.count > 0 {
             resultTokensNodes += calcFirstUnion(token: tokenArray[0])
@@ -160,7 +128,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// Follow集合を求める
-    public static func calcFollowUnion(token: TokenConstants, isStartCalc: Bool = true) -> [TokenNode] {
+    public func calcFollowUnion(token: TokenConstants, isStartCalc: Bool = true) -> [TokenNode] {
         var resultTokenNodes: [TokenNode] = []
         
         // はじめの計算の場合、$を追加
@@ -195,7 +163,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// LR1のClosure集合を求める
-    public static func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode]) -> [LR1Term]? {
+    public func calcClosureUnion(lhs: TokenConstants, rhs: [Token], point: Int, core: [TokenNode]) -> [LR1Term]? {
         // 文法に存在しないlhs -> rhsを渡されたらエラー
         guard hasDefinedSyntax(lhs: lhs, rhs: rhs), point <= rhs.count else {
             return nil
@@ -243,7 +211,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// Closure集合中のかぶりを消す
-    public static func calcCombinedClosureUnion(union: [LR1Term]) -> [LR1Term] {
+    public func calcCombinedClosureUnion(union: [LR1Term]) -> [LR1Term] {
         
         var resultLR1TermUnion:[LR1Term] = []
         
@@ -268,7 +236,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// Goto集合を求める
-    public static func calcGotoUnion(lr1TermUnion: [LR1Term], forcusToken: Token) -> [LR1Term]? {
+    public func calcGotoUnion(lr1TermUnion: [LR1Term], forcusToken: Token) -> [LR1Term]? {
         
         var resultLR1TermUnion: [LR1Term] = []
         
@@ -289,7 +257,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じクロージャ集合？LR0
-    public static func isSameClosureUnion(_ lhs: [LR0Term], _ rhs: [LR0Term]) -> Bool {
+    public func isSameClosureUnion(_ lhs: [LR0Term], _ rhs: [LR0Term]) -> Bool {
         
         if rhs.count != lhs.count {
             return false
@@ -312,7 +280,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じクロージャ集合？LR1
-    public static func isSameClosureUnion(_ lhs: [LR1Term], _ rhs: [LR1Term]) -> Bool {
+    public func isSameClosureUnion(_ lhs: [LR1Term], _ rhs: [LR1Term]) -> Bool {
         
         if rhs.count != lhs.count {
             return false
@@ -336,7 +304,7 @@ extension SyntaxAnalysisResources {
     }
 
     /// 同じToken列を削除する(LR0)
-    private static func makeUnion(array: [LR0Term]) -> [LR0Term] {
+    private func makeUnion(array: [LR0Term]) -> [LR0Term] {
         var result:[LR0Term] = []
         for element in array {
             if !result.contains(where: {
@@ -350,7 +318,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(LR1)
-    private static func makeUnion(union: [LR1Term]) -> [LR1Term] {
+    private func makeUnion(union: [LR1Term]) -> [LR1Term] {
         var result:[LR1Term] = []
         for element in union {
             if !result.contains(where: {
@@ -365,7 +333,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(Token)
-    private static func makeUnion(array: [Token]) -> [Token] {
+    private func makeUnion(array: [Token]) -> [Token] {
         var result:[Token] = []
         for element in array {
             if !result.contains(where: { element.isEqualAllowNilAsSame(to: $0) }) {
@@ -376,7 +344,7 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じToken列を削除する(TokenNode)
-    private static func makeUnion(array: [TokenNode]) -> [TokenNode] {
+    private func makeUnion(array: [TokenNode]) -> [TokenNode] {
         var result:[TokenNode] = []
         for element in array {
             if !result.contains(where: { element.isEqualTokenAllowNilAsSame(to: $0) }) {
@@ -387,14 +355,14 @@ extension SyntaxAnalysisResources {
     }
     
     /// Closureで不正な文法渡すの防止
-    private static func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
+    private func hasDefinedSyntax(lhs: TokenConstants, rhs: [Token]) -> Bool {
         let definedRhs = definedSyntaxs.filter{ $0.lhs == lhs }
         
         for syntax in definedRhs {
-            if let hasSyntax = rhs.combine(syntax.rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
+            if let hasSyntax = rhs.combineIfSameLength(syntax.rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
                 return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
             }) {
-                if hasSyntax == true {
+                if hasSyntax {
                     return true
                 }
             }
@@ -403,18 +371,15 @@ extension SyntaxAnalysisResources {
     }
     
     /// 同じノード配列（順番も考慮）か？
-    public static func isSameTokenRuleAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
-        guard let hasSameNode = lhs.combine(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
-                return tokens.0.isEqualAllowNilAsSame(to: tokens.1)
-        }) else {
-            return false
-        }
-        return hasSameNode
+    public func isSameTokenRuleAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
+        return lhs.combineIfSameLength(rhs)?.reduce(true, { (beforeResult, tokens) -> Bool in
+                return beforeResult && tokens.0.isEqualAllowNilAsSame(to: tokens.1)
+        }) ?? false
     }
     
     /// 同じノード配列かどうか？
-    public static func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
-        if rhs.count != lhs.count {
+    public func isSameTokenArrayAllowNilAsSame(_ lhs: [Token], _ rhs: [Token]) -> Bool {
+        if lhs.count != rhs.count {
             return false
         }
 
@@ -465,9 +430,7 @@ extension TokenNode {
             return l == r
         case (.separator, .separator):
             return true
-        case (.end, .end):
-            return true
-        case (.`$`, .`$`):
+        case (.end, .end), (.`$`, .`$`):
             return true
         default:
             return false
@@ -480,7 +443,7 @@ extension Collection {
     // MARK: Combine function
     
     /// 同じ長さの配列２つをまとめる
-    func combine<C: Collection>(_ collection: C) -> [(Element, Element)]? where C.Element == Element {
+    func combineIfSameLength<C: Collection>(_ collection: C) -> [(Element, Element)]? where C.Element == Element {
         guard collection.count == self.count, let castedSelf = self as? [Element], let collection = collection as? [Element] else {
             return nil
         }

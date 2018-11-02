@@ -16,6 +16,7 @@ protocol Token {
 }
 
 extension Token {
+    // Tokenが同じかどうかを比べる、optionalの場合はTokenのenumの側で判断
     public func isEqualAllowNilAsSame(to: Token) -> Bool {
         let tokens = (self, to)
         switch tokens {

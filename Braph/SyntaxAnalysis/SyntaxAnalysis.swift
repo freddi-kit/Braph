@@ -12,12 +12,48 @@ class SyntaxAnalysis {
     
     // MARL: Properties
     
+    private var definedSyntaxs: [GenerateRule] = [
+        
+        // (for extended syntax)
+        (lhs: .start, rhs: [TokenConstants.statement]),
+        
+        // statement
+        (lhs: .statement, rhs: [TokenConstants.declaration]),
+        (lhs: .statement, rhs: [TokenConstants.expr]),
+        (lhs: .statement, rhs: [TokenConstants.return]),
+        (lhs: .statement, rhs: [TokenConstants.assign]),
+        
+        // declaration
+        (lhs: .declaration, rhs: [TokenNode.keyword(.declaration, nil), TokenNode.identifier(nil), TokenConstants.initializer]),
+        (lhs: .initializer, rhs:[TokenNode.symbol("="), TokenConstants.expr]),
+        
+        // assign
+        (lhs: .assign, rhs: [TokenNode.identifier(nil), TokenConstants.initializer]),
+        
+        // expression
+        (lhs: .expr, rhs: [TokenConstants.expr, TokenNode.operant(.plus, nil), TokenConstants.term]),
+        (lhs: .expr, rhs: [TokenConstants.term]),
+        (lhs: .term, rhs: [TokenConstants.term, TokenNode.operant(.time, nil), TokenConstants.factor]),
+        (lhs: .term, rhs: [TokenConstants.factor]),
+        (lhs: .factor, rhs: [TokenNode.parenthesis("("), TokenConstants.expr, TokenNode.parenthesis(")")]),
+        (lhs: .factor, rhs: [TokenNode.literal(nil, nil)]),
+        (lhs: .factor, rhs: [TokenNode.identifier(nil)]),
+        
+        // return
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return")]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenNode.identifier(nil)]),
+        (lhs: .return, rhs: [TokenNode.keyword(.return, "return"), TokenConstants.expr]),
+    ]
+    
     // 状態遷移表
     private var actionSheet: [(input: Token, status: Int, isShift: Bool, isAccept: Bool, goTo: Int)] = []
+    
+    private let syntaxAnalysisResources: SyntaxAnalysisResources
     
     // MARK: Initializer
     
     init() {
+        syntaxAnalysisResources = .init(definedSyntaxs: definedSyntaxs)
         makeActionSheet()
         if demoModeAtSyn {
             print("action count: ", actionSheet.count)
@@ -30,10 +66,10 @@ class SyntaxAnalysis {
     // MARK: Public functions
     
     /// 構文解析
-    public func analysis(input inputTokens:[TokenNode]) -> SyntaxTree? {
+    public func analysis(input inputTokens: [TokenNode]) -> SyntaxTree? {
         var nowStatusStack: [Int] = [0]
         var inputTokenIndex = 0
-        var resultSyntaxs: [SyntaxAnalysisResources.GenerateRule] = []
+        var resultSyntaxs: [GenerateRule] = []
         
         while inputTokenIndex < inputTokens.count {
             
@@ -97,11 +133,11 @@ class SyntaxAnalysis {
             } else {
                 if demoModeAtSyn {
                     print("reduce")
-                    print(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
+                    print(syntaxAnalysisResources.definedSyntaxs[action.goTo])
                 }
                 
-                resultSyntaxs.append(SyntaxAnalysisResources.definedSyntaxs[action.goTo])
-                for _ in 0..<SyntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
+                resultSyntaxs.append(syntaxAnalysisResources.definedSyntaxs[action.goTo])
+                for _ in 0..<syntaxAnalysisResources.definedSyntaxs[action.goTo].rhs.count {
                     guard nowStatusStack.popLast() != nil else {
                         return nil
                     }
@@ -109,7 +145,7 @@ class SyntaxAnalysis {
                 guard let nowStatus = nowStatusStack.last else {
                     break
                 }
-                let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: SyntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
+                let getFromActionSheet = actionSheet.filter{ $0.input.isEqualAllowNilAsSame(to: syntaxAnalysisResources.definedSyntaxs[action.goTo].lhs) && $0.status == nowStatus }
                 guard getFromActionSheet.count == 1, let action = getFromActionSheet.first else {
                     break
                 }
@@ -130,7 +166,7 @@ class SyntaxAnalysis {
         actionSheet = []
         
         // 初期ノードの作成
-        guard let firstNode = SyntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
+        guard let firstNode = syntaxAnalysisResources.calcClosureUnion(lhs: .start, rhs:  [TokenConstants.statement], point: 0, core: [TokenNode.`$`]) else {
             print("automata is not generated")
             return nil
         }
@@ -140,8 +176,8 @@ class SyntaxAnalysis {
         var indexAutomatas = 0
         while indexAutomatas < automatas.count {
             // 文法中に使われているTokenを見る
-            for token in SyntaxAnalysisResources.appearedTokenInSyntax {
-                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
+            for token in syntaxAnalysisResources.appearedTokenInSyntax {
+                guard let gotoUnion = syntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
                     print("automata is not generated")
                     return nil
                 }
@@ -149,7 +185,7 @@ class SyntaxAnalysis {
                 if !gotoUnion.isEmpty
                     // Is not already added?
                     && automatas.reduce(true) { (result, arg) -> Bool in
-                        return result && !SyntaxAnalysisResources.isSameClosureUnion(arg, gotoUnion)
+                        return result && !syntaxAnalysisResources.isSameClosureUnion(arg, gotoUnion)
                     } {
                     automatas += [gotoUnion]
                 }
@@ -180,9 +216,9 @@ class SyntaxAnalysis {
                     actionSheet.append((input: TokenNode.`$`, status: indexAutomatas, isShift: false, isAccept: true, goTo: -1))
                 } else if term.point == term.rhs.count {
                     // Reduceの追加
-                    let indexSameTerm = SyntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
+                    let indexSameTerm = syntaxAnalysisResources.definedSyntaxs.index { arg -> Bool in
                         return arg.lhs == term.lhs
-                            && SyntaxAnalysisResources.isSameTokenRuleAllowNilAsSame(arg.rhs, term.rhs)
+                            && syntaxAnalysisResources.isSameTokenRuleAllowNilAsSame(arg.rhs, term.rhs)
                     }
                     
                     guard let reduceTo = indexSameTerm else {
@@ -197,15 +233,15 @@ class SyntaxAnalysis {
             }
             
             // Shiftの追加
-            for token in SyntaxAnalysisResources.appearedTokenInSyntax {
+            for token in syntaxAnalysisResources.appearedTokenInSyntax {
                 // tokenごとの遷移先を見る
-                guard let gotoUnion = SyntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
+                guard let gotoUnion = syntaxAnalysisResources.calcGotoUnion(lr1TermUnion: automatas[indexAutomatas], forcusToken: token) else {
                     continue
                 }
                 // Shift先の追加
                 var shiftTo = 0
                 for automata in automatas {
-                    if SyntaxAnalysisResources.isSameClosureUnion(automata, gotoUnion) {
+                    if syntaxAnalysisResources.isSameClosureUnion(automata, gotoUnion) {
                         self.actionSheet.append((input: token,
                                                  status: indexAutomatas,
                                                  isShift: true,

@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		61786957218CAC58002F68DE /* BraphTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61786956218CAC58002F68DE /* BraphTests.swift */; };
+		6178695F218CACBF002F68DE /* SyntaxAnalysisFunctionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6178695E218CACBF002F68DE /* SyntaxAnalysisFunctionTests.swift */; };
+		61786960218CACF9002F68DE /* SemanticsAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EDD89E21552E930017896E /* SemanticsAnalysis.swift */; };
+		61786961218CACFC002F68DE /* Q.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61DA866E21442122005F6A7C /* Q.swift */; };
+		61786962218CACFE002F68DE /* LexicalAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9795321310B7A00ECD3A7 /* LexicalAnalysis.swift */; };
+		61786963218CAD01002F68DE /* LexicalAnalysisResources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61DA866B2144205F005F6A7C /* LexicalAnalysisResources.swift */; };
+		61786964218CAD04002F68DE /* SyntaxAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61DA86712145024E005F6A7C /* SyntaxAnalysis.swift */; };
+		61786965218CAD06002F68DE /* SyntaxAnalysisResources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61DA86742152A46C005F6A7C /* SyntaxAnalysisResources.swift */; };
+		61786966218CAD09002F68DE /* SyntaxTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EDD8A1215531CE0017896E /* SyntaxTree.swift */; };
+		61786967218CAD0C002F68DE /* TokenNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9795021310B3C00ECD3A7 /* TokenNode.swift */; };
+		61786968218CAD0F002F68DE /* TokenConstant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61DA86762152A575005F6A7C /* TokenConstant.swift */; };
+		61786969218CAD30002F68DE /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9794821310A9A00ECD3A7 /* main.swift */; };
 		61D9794921310A9A00ECD3A7 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9794821310A9A00ECD3A7 /* main.swift */; };
 		61D9795121310B3C00ECD3A7 /* TokenNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9795021310B3C00ECD3A7 /* TokenNode.swift */; };
 		61D9795421310B7A00ECD3A7 /* LexicalAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9795321310B7A00ECD3A7 /* LexicalAnalysis.swift */; };
@@ -33,6 +45,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		61786954218CAC58002F68DE /* BraphTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BraphTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		61786956218CAC58002F68DE /* BraphTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BraphTests.swift; sourceTree = "<group>"; };
+		61786958218CAC58002F68DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6178695E218CACBF002F68DE /* SyntaxAnalysisFunctionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxAnalysisFunctionTests.swift; sourceTree = "<group>"; };
 		61D9794521310A9A00ECD3A7 /* Braph */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Braph; sourceTree = BUILT_PRODUCTS_DIR; };
 		61D9794821310A9A00ECD3A7 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		61D9795021310B3C00ECD3A7 /* TokenNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenNode.swift; sourceTree = "<group>"; };
@@ -47,6 +63,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		61786951218CAC58002F68DE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		61D9794221310A9A00ECD3A7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -57,10 +80,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		61786955218CAC58002F68DE /* BraphTests */ = {
+			isa = PBXGroup;
+			children = (
+				61786956218CAC58002F68DE /* BraphTests.swift */,
+				6178695D218CAC94002F68DE /* SyntaxAnalysisTests */,
+				61786958218CAC58002F68DE /* Info.plist */,
+			);
+			path = BraphTests;
+			sourceTree = "<group>";
+		};
+		6178695D218CAC94002F68DE /* SyntaxAnalysisTests */ = {
+			isa = PBXGroup;
+			children = (
+				6178695E218CACBF002F68DE /* SyntaxAnalysisFunctionTests.swift */,
+			);
+			path = SyntaxAnalysisTests;
+			sourceTree = "<group>";
+		};
 		61D9793C21310A9A00ECD3A7 = {
 			isa = PBXGroup;
 			children = (
 				61D9794721310A9A00ECD3A7 /* Braph */,
+				61786955218CAC58002F68DE /* BraphTests */,
 				61D9794621310A9A00ECD3A7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -69,6 +111,7 @@
 			isa = PBXGroup;
 			children = (
 				61D9794521310A9A00ECD3A7 /* Braph */,
+				61786954218CAC58002F68DE /* BraphTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -133,6 +176,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		61786953218CAC58002F68DE /* BraphTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 61786959218CAC58002F68DE /* Build configuration list for PBXNativeTarget "BraphTests" */;
+			buildPhases = (
+				61786950218CAC58002F68DE /* Sources */,
+				61786951218CAC58002F68DE /* Frameworks */,
+				61786952218CAC58002F68DE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BraphTests;
+			productName = BraphTests;
+			productReference = 61786954218CAC58002F68DE /* BraphTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		61D9794421310A9A00ECD3A7 /* Braph */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 61D9794C21310A9A00ECD3A7 /* Build configuration list for PBXNativeTarget "Braph" */;
@@ -157,10 +217,13 @@
 		61D9793D21310A9A00ECD3A7 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0940;
+				LastSwiftUpdateCheck = 1000;
 				LastUpgradeCheck = 0940;
 				ORGANIZATIONNAME = "勇者野良猫の部屋";
 				TargetAttributes = {
+					61786953218CAC58002F68DE = {
+						CreatedOnToolsVersion = 10.0;
+					};
 					61D9794421310A9A00ECD3A7 = {
 						CreatedOnToolsVersion = 9.4.1;
 					};
@@ -179,11 +242,19 @@
 			projectRoot = "";
 			targets = (
 				61D9794421310A9A00ECD3A7 /* Braph */,
+				61786953218CAC58002F68DE /* BraphTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		61786952218CAC58002F68DE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		61DA8668213B9F74005F6A7C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -194,6 +265,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		61786950218CAC58002F68DE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61786960218CACF9002F68DE /* SemanticsAnalysis.swift in Sources */,
+				61786968218CAD0F002F68DE /* TokenConstant.swift in Sources */,
+				61786969218CAD30002F68DE /* main.swift in Sources */,
+				61786966218CAD09002F68DE /* SyntaxTree.swift in Sources */,
+				6178695F218CACBF002F68DE /* SyntaxAnalysisFunctionTests.swift in Sources */,
+				61786962218CACFE002F68DE /* LexicalAnalysis.swift in Sources */,
+				61786957218CAC58002F68DE /* BraphTests.swift in Sources */,
+				61786963218CAD01002F68DE /* LexicalAnalysisResources.swift in Sources */,
+				61786961218CACFC002F68DE /* Q.swift in Sources */,
+				61786967218CAD0C002F68DE /* TokenNode.swift in Sources */,
+				61786965218CAD06002F68DE /* SyntaxAnalysisResources.swift in Sources */,
+				61786964218CAD04002F68DE /* SyntaxAnalysis.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		61D9794121310A9A00ECD3A7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -214,6 +304,45 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		6178695A218CAC58002F68DE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = N6M95KEDJ2;
+				INFOPLIST_FILE = BraphTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = freddi.BraphTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Debug;
+		};
+		6178695B218CAC58002F68DE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = N6M95KEDJ2;
+				INFOPLIST_FILE = BraphTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = freddi.BraphTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Release;
+		};
 		61D9794A21310A9A00ECD3A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -350,6 +479,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		61786959218CAC58002F68DE /* Build configuration list for PBXNativeTarget "BraphTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6178695A218CAC58002F68DE /* Debug */,
+				6178695B218CAC58002F68DE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		61D9794021310A9A00ECD3A7 /* Build configuration list for PBXProject "Braph" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
